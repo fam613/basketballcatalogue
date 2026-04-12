@@ -22,7 +22,6 @@ function createNbaApiUrl(endpoint: string, params: Record<string, QueryValue> = 
 
 async function callNbaApi(endpoint: string, params: Record<string, QueryValue> = {}) {
   const url = createNbaApiUrl(endpoint, params)
-  const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/nba-api?${searchParams}`
   
   const response = await fetch(url, {
     headers: {
