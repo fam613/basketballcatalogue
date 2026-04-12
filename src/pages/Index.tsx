@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Search, LayoutGrid, Building2, RefreshCw } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerDetailModal } from '@/components/PlayerDetailModal';
+import { PlayerCompareModal } from '@/components/PlayerCompareModal';
 import { TeamGrid } from '@/components/TeamGrid';
 import { usePlayersQuery, usePlayerStatsQuery } from '@/hooks/use-nba-data';
 import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
-import { searchPlayers, filterByPosition } from '@/lib/nba-data';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const POSITIONS: PositionFilter[] = ['ALL', 'G', 'F', 'C'];
@@ -17,6 +17,11 @@ const Index = () => {
   const [positionFilter, setPositionFilter] = useState<PositionFilter>('ALL');
   const [selectedPlayer, setSelectedPlayer] = useState<NBAPlayer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Compare mode
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSlots, setCompareSlots] = useState<[NBAPlayer | null, NBAPlayer | null]>([null, null]);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const { data: players = [], isFetching: playersFetching } = usePlayersQuery();
   const playerIds = useMemo(() => players.map(p => p.id), [players]);
@@ -39,8 +44,37 @@ const Index = () => {
   }, [players, searchQuery, positionFilter]);
 
   const handlePlayerClick = (player: NBAPlayer) => {
+    if (compareMode) {
+      // If already selected, deselect
+      if (compareSlots[0]?.id === player.id) {
+        setCompareSlots([null, compareSlots[1]]);
+        return;
+      }
+      if (compareSlots[1]?.id === player.id) {
+        setCompareSlots([compareSlots[0], null]);
+        return;
+      }
+      // Fill first empty slot
+      if (!compareSlots[0]) {
+        setCompareSlots([player, compareSlots[1]]);
+      } else if (!compareSlots[1]) {
+        setCompareSlots([compareSlots[0], player]);
+      } else {
+        // Both full — replace second
+        setCompareSlots([compareSlots[0], player]);
+      }
+      return;
+    }
     setSelectedPlayer(player);
     setModalOpen(true);
+  };
+
+  const isSelected = (id: number) => compareMode && (compareSlots[0]?.id === id || compareSlots[1]?.id === id);
+  const selectedCount = [compareSlots[0], compareSlots[1]].filter(Boolean).length;
+
+  const exitCompare = () => {
+    setCompareMode(false);
+    setCompareSlots([null, null]);
   };
 
   return (
@@ -67,7 +101,7 @@ const Index = () => {
             </div>
 
             <div className="flex-1 flex items-center gap-3 sm:justify-end">
-              {viewMode === 'grid' && (
+              {viewMode === 'grid' && !compareMode && (
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -79,9 +113,23 @@ const Index = () => {
                 </div>
               )}
 
+              {viewMode === 'grid' && (
+                <button
+                  onClick={() => compareMode ? exitCompare() : setCompareMode(true)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors shrink-0 ${
+                    compareMode
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'border-border bg-card text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <GitCompareArrows className="h-4 w-4" />
+                  {compareMode ? 'Exit Compare' : 'Compare'}
+                </button>
+              )}
+
               <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
                 <button
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => { setViewMode('grid'); }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
                     viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'
                   }`}
@@ -89,7 +137,7 @@ const Index = () => {
                   <LayoutGrid className="h-4 w-4" /> Cards
                 </button>
                 <button
-                  onClick={() => setViewMode('teams')}
+                  onClick={() => { setViewMode('teams'); exitCompare(); }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
                     viewMode === 'teams' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'
                   }`}
@@ -100,7 +148,7 @@ const Index = () => {
             </div>
           </div>
 
-          {viewMode === 'grid' && (
+          {viewMode === 'grid' && !compareMode && (
             <div className="flex gap-2 mt-3">
               {POSITIONS.map((pos) => (
                 <button
@@ -117,11 +165,17 @@ const Index = () => {
               ))}
             </div>
           )}
+
+          {compareMode && (
+            <div className="mt-3 text-sm text-muted-foreground">
+              Tap two players to compare · {selectedCount}/2 selected
+            </div>
+          )}
         </div>
       </header>
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
         <AnimatePresence mode="wait">
           {viewMode === 'grid' ? (
             <motion.div
@@ -134,7 +188,14 @@ const Index = () => {
               {filteredPlayers.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredPlayers.map((player, i) => (
-                    <PlayerCard key={player.id} player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} />
+                    <div key={player.id} className={`relative ${isSelected(player.id) ? 'ring-2 ring-primary rounded-2xl' : ''}`}>
+                      <PlayerCard player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} />
+                      {isSelected(player.id) && (
+                        <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold z-10">
+                          {compareSlots[0]?.id === player.id ? '1' : '2'}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -158,12 +219,66 @@ const Index = () => {
         </AnimatePresence>
       </main>
 
+      {/* Compare floating bar */}
+      <AnimatePresence>
+        {compareMode && selectedCount > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className="flex items-center gap-3 bg-card border border-border shadow-xl rounded-2xl px-5 py-3">
+              {compareSlots.map((slot, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  {slot ? (
+                    <>
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                        style={{ backgroundColor: slot.team.color }}
+                      >
+                        {slot.first_name[0]}{slot.last_name[0]}
+                      </div>
+                      <span className="text-sm font-semibold max-w-[100px] truncate">
+                        {slot.last_name}
+                      </span>
+                      <button onClick={() => setCompareSlots(i === 0 ? [null, compareSlots[1]] : [compareSlots[0], null])} className="text-muted-foreground hover:text-foreground">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-muted-foreground/40" />
+                  )}
+                  {i === 0 && <span className="text-xs font-bold text-muted-foreground mx-1">vs</span>}
+                </div>
+              ))}
+              <button
+                disabled={selectedCount < 2}
+                onClick={() => setCompareOpen(true)}
+                className="ml-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40 transition-opacity"
+              >
+                Compare
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <PlayerDetailModal
         player={selectedPlayer}
         stats={selectedPlayer ? statsMap[selectedPlayer.id] : undefined}
         open={modalOpen}
         onOpenChange={setModalOpen}
       />
+
+      {compareSlots[0] && compareSlots[1] && (
+        <PlayerCompareModal
+          players={[compareSlots[0], compareSlots[1]]}
+          stats={[statsMap[compareSlots[0].id], statsMap[compareSlots[1].id]]}
+          open={compareOpen}
+          onOpenChange={setCompareOpen}
+        />
+      )}
     </div>
   );
 };
