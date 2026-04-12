@@ -2,15 +2,17 @@ import { motion } from 'framer-motion';
 import { NBATeam, NBAPlayer } from '@/lib/types';
 import { NBA_TEAMS, getPlayersForTeam } from '@/lib/nba-data';
 import { PlayerCard } from './PlayerCard';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
 interface TeamGridProps {
   onPlayerClick: (player: NBAPlayer) => void;
+  favTeamIds?: Set<number>;
+  onToggleFavTeam?: (id: number) => void;
 }
 
-function TeamTile({ team, onClick }: { team: NBATeam; onClick: () => void }) {
+function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClick: () => void; isFav?: boolean; onToggleFav?: () => void }) {
   const playerCount = getPlayersForTeam(team.abbreviation).length;
 
   return (
@@ -18,16 +20,26 @@ function TeamTile({ team, onClick }: { team: NBATeam; onClick: () => void }) {
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="cursor-pointer"
+      className="cursor-pointer relative"
     >
       <div className="rounded-2xl bg-card border border-border/60 shadow-sm hover:shadow-lg transition-shadow overflow-hidden">
         <div className="h-2 w-full" style={{ background: `linear-gradient(90deg, ${team.color}, ${team.secondaryColor})` }} />
         <div className="p-5">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-sm font-bold mb-3"
-            style={{ backgroundColor: team.color }}
-          >
-            {team.abbreviation}
+          <div className="flex items-start justify-between">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-sm font-bold mb-3"
+              style={{ backgroundColor: team.color }}
+            >
+              {team.abbreviation}
+            </div>
+            {onToggleFav && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFav(); }}
+                className="p-1 rounded-full hover:bg-muted transition-colors"
+              >
+                <Star className={`h-4 w-4 transition-colors ${isFav ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} />
+              </button>
+            )}
           </div>
           <h3 className="font-bold text-base" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
             {team.full_name}
@@ -49,7 +61,7 @@ function TeamTile({ team, onClick }: { team: NBATeam; onClick: () => void }) {
   );
 }
 
-export function TeamGrid({ onPlayerClick }: TeamGridProps) {
+export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam }: TeamGridProps) {
   const [selectedTeam, setSelectedTeam] = useState<NBATeam | null>(null);
 
   if (selectedTeam) {
@@ -98,7 +110,7 @@ export function TeamGrid({ onPlayerClick }: TeamGridProps) {
         <h2 className="font-bold text-lg mb-4 text-muted-foreground uppercase tracking-widest text-xs">Eastern Conference</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {eastTeams.map(team => (
-            <TeamTile key={team.id} team={team} onClick={() => setSelectedTeam(team)} />
+            <TeamTile key={team.id} team={team} onClick={() => setSelectedTeam(team)} isFav={favTeamIds?.has(team.id)} onToggleFav={onToggleFavTeam ? () => onToggleFavTeam(team.id) : undefined} />
           ))}
         </div>
       </div>
@@ -106,7 +118,7 @@ export function TeamGrid({ onPlayerClick }: TeamGridProps) {
         <h2 className="font-bold text-lg mb-4 text-muted-foreground uppercase tracking-widest text-xs">Western Conference</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {westTeams.map(team => (
-            <TeamTile key={team.id} team={team} onClick={() => setSelectedTeam(team)} />
+            <TeamTile key={team.id} team={team} onClick={() => setSelectedTeam(team)} isFav={favTeamIds?.has(team.id)} onToggleFav={onToggleFavTeam ? () => onToggleFavTeam(team.id) : undefined} />
           ))}
         </div>
       </div>

@@ -1,0 +1,43 @@
+import { useState, useCallback, useEffect } from 'react';
+
+const STORAGE_KEY_PLAYERS = 'nba-fav-players';
+const STORAGE_KEY_TEAMS = 'nba-fav-teams';
+
+function loadSet(key: string): Set<number> {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? new Set(JSON.parse(raw) as number[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveSet(key: string, set: Set<number>) {
+  localStorage.setItem(key, JSON.stringify([...set]));
+}
+
+export function useFavorites() {
+  const [favPlayerIds, setFavPlayerIds] = useState<Set<number>>(() => loadSet(STORAGE_KEY_PLAYERS));
+  const [favTeamIds, setFavTeamIds] = useState<Set<number>>(() => loadSet(STORAGE_KEY_TEAMS));
+
+  useEffect(() => saveSet(STORAGE_KEY_PLAYERS, favPlayerIds), [favPlayerIds]);
+  useEffect(() => saveSet(STORAGE_KEY_TEAMS, favTeamIds), [favTeamIds]);
+
+  const toggleFavPlayer = useCallback((id: number) => {
+    setFavPlayerIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleFavTeam = useCallback((id: number) => {
+    setFavTeamIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  return { favPlayerIds, favTeamIds, toggleFavPlayer, toggleFavTeam };
+}
