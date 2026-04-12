@@ -11,6 +11,8 @@ interface TeamGridProps {
   favTeamIds?: Set<number>;
   onToggleFavTeam?: (id: number) => void;
   teamRecords?: Record<number, { wins: number; losses: number }>;
+  compareMode?: boolean;
+  compareSlots?: [NBAPlayer | null, NBAPlayer | null];
 }
 
 function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClick: () => void; isFav?: boolean; onToggleFav?: () => void }) {
@@ -62,7 +64,7 @@ function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClic
   );
 }
 
-export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecords = {} }: TeamGridProps) {
+export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecords = {}, compareMode = false, compareSlots = [null, null] }: TeamGridProps) {
   const [selectedTeam, setSelectedTeam] = useState<NBATeam | null>(null);
 
   const teamsWithRecords = NBA_TEAMS.map(t => {
