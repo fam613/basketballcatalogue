@@ -1,10 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
-import { PLAYER_STATS } from '@/lib/nba-data';
 import { motion } from 'framer-motion';
 
 interface PlayerDetailModalProps {
   player: NBAPlayer | null;
+  stats?: PlayerStats;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -26,9 +26,8 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-export function PlayerDetailModal({ player, open, onOpenChange }: PlayerDetailModalProps) {
+export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerDetailModalProps) {
   if (!player) return null;
-  const stats: PlayerStats | undefined = PLAYER_STATS[player.id];
   const initials = `${player.first_name[0]}${player.last_name[0]}`;
 
   const draftInfo = player.draft_year
@@ -38,7 +37,6 @@ export function PlayerDetailModal({ player, open, onOpenChange }: PlayerDetailMo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
-        {/* Header with team gradient */}
         <div
           className="p-6 pb-4"
           style={{ background: `linear-gradient(135deg, ${player.team.color}18, ${player.team.secondaryColor}18)` }}
@@ -71,14 +69,8 @@ export function PlayerDetailModal({ player, open, onOpenChange }: PlayerDetailMo
         </div>
 
         <div className="px-6 pb-6 space-y-5">
-          {/* Main stats */}
           {stats && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="grid grid-cols-4 gap-2"
-            >
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-4 gap-2">
               <BigStat label="PPG" value={stats.pts.toFixed(1)} />
               <BigStat label="RPG" value={stats.reb.toFixed(1)} />
               <BigStat label="APG" value={stats.ast.toFixed(1)} />
@@ -86,13 +78,8 @@ export function PlayerDetailModal({ player, open, onOpenChange }: PlayerDetailMo
             </motion.div>
           )}
 
-          {/* Shooting splits */}
           {stats && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
               <h4 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Shooting</h4>
               <div className="grid grid-cols-3 gap-2">
                 <BigStat label="FG%" value={(stats.fg_pct * 100).toFixed(1)} suffix="%" />
@@ -102,37 +89,22 @@ export function PlayerDetailModal({ player, open, onOpenChange }: PlayerDetailMo
             </motion.div>
           )}
 
-          {/* Additional stats */}
           {stats && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="grid grid-cols-3 gap-2"
-            >
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-3 gap-2">
               <BigStat label="STL" value={stats.stl.toFixed(1)} />
               <BigStat label="BLK" value={stats.blk.toFixed(1)} />
               <BigStat label="TO" value={stats.turnover.toFixed(1)} />
             </motion.div>
           )}
 
-          {/* Player Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="rounded-xl border border-border/60 p-4"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="rounded-xl border border-border/60 p-4">
             <h4 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Player Info</h4>
             <InfoRow label="Team Record" value={`${player.team.wins}W - ${player.team.losses}L`} />
             <InfoRow label="Games Played" value={stats ? String(stats.gp) : 'N/A'} />
             <InfoRow label="Draft" value={draftInfo} />
             <InfoRow label="College" value={player.college} />
             <InfoRow label="Country" value={player.country} />
-            <InfoRow
-              label="Career Teams"
-              value={[...new Set(player.career_teams)].join(' → ')}
-            />
+            <InfoRow label="Career Teams" value={[...new Set(player.career_teams)].join(' → ')} />
           </motion.div>
         </div>
       </DialogContent>
