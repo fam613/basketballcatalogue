@@ -51,10 +51,17 @@ Deno.serve(async (req) => {
       headers: { Authorization: apiKey },
     })
 
-    const data = await response.json()
+    const text = await response.text()
+    
+    if (!response.ok) {
+      return new Response(JSON.stringify({ error: `API returned ${response.status}: ${text}` }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
-    return new Response(JSON.stringify(data), {
-      status: response.status,
+    return new Response(text, {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
