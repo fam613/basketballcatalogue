@@ -11,6 +11,8 @@ interface TeamGridProps {
   favTeamIds?: Set<number>;
   onToggleFavTeam?: (id: number) => void;
   teamRecords?: Record<number, { wins: number; losses: number }>;
+  compareMode?: boolean;
+  compareSlots?: [NBAPlayer | null, NBAPlayer | null];
 }
 
 function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClick: () => void; isFav?: boolean; onToggleFav?: () => void }) {
@@ -62,7 +64,7 @@ function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClic
   );
 }
 
-export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecords = {} }: TeamGridProps) {
+export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecords = {}, compareMode = false, compareSlots = [null, null] }: TeamGridProps) {
   const [selectedTeam, setSelectedTeam] = useState<NBATeam | null>(null);
 
   const teamsWithRecords = NBA_TEAMS.map(t => {
@@ -96,9 +98,19 @@ export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecor
 
         {players.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {players.map((player, i) => (
-              <PlayerCard key={player.id} player={player} onClick={onPlayerClick} index={i} />
-            ))}
+            {players.map((player, i) => {
+              const isSelected = compareMode && (compareSlots[0]?.id === player.id || compareSlots[1]?.id === player.id);
+              return (
+                <div key={player.id} className={`relative ${isSelected ? 'ring-2 ring-primary rounded-2xl' : ''}`}>
+                  <PlayerCard player={player} onClick={onPlayerClick} index={i} />
+                  {isSelected && (
+                    <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold z-10">
+                      {compareSlots[0]?.id === player.id ? '1' : '2'}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-muted-foreground text-center py-12">No players in our database for this team yet.</p>
