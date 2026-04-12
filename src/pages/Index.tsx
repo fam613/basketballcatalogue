@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerDetailModal } from '@/components/PlayerDetailModal';
 import { PlayerCompareModal } from '@/components/PlayerCompareModal';
 import { TeamGrid } from '@/components/TeamGrid';
+import { StandingsView } from '@/components/StandingsView';
 import { usePlayersQuery, usePlayerStatsQuery } from '@/hooks/use-nba-data';
 import { useFavorites } from '@/hooks/use-favorites';
 import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
@@ -160,6 +161,14 @@ const Index = () => {
                 >
                   <Building2 className="h-4 w-4" /> Teams
                 </button>
+                <button
+                  onClick={() => { setViewMode('standings'); exitCompare(); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
+                    viewMode === 'standings' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Trophy className="h-4 w-4" /> Standings
+                </button>
               </div>
             </div>
           </div>
@@ -238,7 +247,7 @@ const Index = () => {
                 </div>
               )}
             </motion.div>
-          ) : (
+          ) : viewMode === 'teams' ? (
             <motion.div
               key="teams"
               initial={{ opacity: 0 }}
@@ -247,6 +256,16 @@ const Index = () => {
               transition={{ duration: 0.2 }}
             >
               <TeamGrid onPlayerClick={handlePlayerClick} favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="standings"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <StandingsView favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} />
             </motion.div>
           )}
         </AnimatePresence>
