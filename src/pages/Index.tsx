@@ -1,20 +1,23 @@
 import { useState, useMemo } from 'react';
-import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerDetailModal } from '@/components/PlayerDetailModal';
 import { PlayerCompareModal } from '@/components/PlayerCompareModal';
 import { TeamGrid } from '@/components/TeamGrid';
 import { usePlayersQuery, usePlayerStatsQuery } from '@/hooks/use-nba-data';
+import { useFavorites } from '@/hooks/use-favorites';
 import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const POSITIONS: PositionFilter[] = ['ALL', 'G', 'F', 'C'];
 
+type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';
+
 const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [positionFilter, setPositionFilter] = useState<PositionFilter>('ALL');
+  const [gridFilter, setGridFilter] = useState<GridFilter>('ALL');
   const [selectedPlayer, setSelectedPlayer] = useState<NBAPlayer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -22,6 +25,8 @@ const Index = () => {
   const [compareMode, setCompareMode] = useState(false);
   const [compareSlots, setCompareSlots] = useState<[NBAPlayer | null, NBAPlayer | null]>([null, null]);
   const [compareOpen, setCompareOpen] = useState(false);
+
+  const { favPlayerIds, favTeamIds, toggleFavPlayer, toggleFavTeam } = useFavorites();
 
   const { data: players = [], isFetching: playersFetching } = usePlayersQuery();
   const playerIds = useMemo(() => players.map(p => p.id), [players]);
@@ -37,15 +42,19 @@ const Index = () => {
           p.team.abbreviation.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : [...players];
-    if (positionFilter !== 'ALL') {
-      result = result.filter(p => p.position.includes(positionFilter.charAt(0)));
+
+    if (gridFilter === 'FAV_PLAYERS') {
+      result = result.filter(p => favPlayerIds.has(p.id));
+    } else if (gridFilter === 'FAV_TEAMS') {
+      result = result.filter(p => favTeamIds.has(p.team.id));
+    } else if (gridFilter !== 'ALL') {
+      result = result.filter(p => p.position.includes(gridFilter.charAt(0)));
     }
     return result;
-  }, [players, searchQuery, positionFilter]);
+  }, [players, searchQuery, gridFilter, favPlayerIds, favTeamIds]);
 
   const handlePlayerClick = (player: NBAPlayer) => {
     if (compareMode) {
-      // If already selected, deselect
       if (compareSlots[0]?.id === player.id) {
         setCompareSlots([null, compareSlots[1]]);
         return;
@@ -54,13 +63,11 @@ const Index = () => {
         setCompareSlots([compareSlots[0], null]);
         return;
       }
-      // Fill first empty slot
       if (!compareSlots[0]) {
         setCompareSlots([player, compareSlots[1]]);
       } else if (!compareSlots[1]) {
         setCompareSlots([compareSlots[0], player]);
       } else {
-        // Both full — replace second
         setCompareSlots([compareSlots[0], player]);
       }
       return;
@@ -76,6 +83,15 @@ const Index = () => {
     setCompareMode(false);
     setCompareSlots([null, null]);
   };
+
+  const FILTER_BUTTONS: { key: GridFilter; label: string; icon?: 'heart' | 'star' }[] = [
+    { key: 'ALL', label: 'All' },
+    { key: 'FAV_PLAYERS', label: 'Fav Players', icon: 'heart' },
+    { key: 'FAV_TEAMS', label: 'Fav Teams', icon: 'star' },
+    { key: 'G', label: 'Guards' },
+    { key: 'F', label: 'Forwards' },
+    { key: 'C', label: 'Centers' },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,18 +165,20 @@ const Index = () => {
           </div>
 
           {viewMode === 'grid' && !compareMode && (
-            <div className="flex gap-2 mt-3">
-              {POSITIONS.map((pos) => (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {FILTER_BUTTONS.map(({ key, label, icon }) => (
                 <button
-                  key={pos}
-                  onClick={() => setPositionFilter(pos)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    positionFilter === pos
+                  key={key}
+                  onClick={() => setGridFilter(key)}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                    gridFilter === key
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {pos === 'ALL' ? 'All' : pos === 'G' ? 'Guards' : pos === 'F' ? 'Forwards' : 'Centers'}
+                  {icon === 'heart' && <Heart className={`h-3 w-3 ${gridFilter === key ? 'fill-current' : ''}`} />}
+                  {icon === 'star' && <Star className={`h-3 w-3 ${gridFilter === key ? 'fill-current' : ''}`} />}
+                  {label}
                 </button>
               ))}
             </div>
@@ -190,6 +208,13 @@ const Index = () => {
                   {filteredPlayers.map((player, i) => (
                     <div key={player.id} className={`relative ${isSelected(player.id) ? 'ring-2 ring-primary rounded-2xl' : ''}`}>
                       <PlayerCard player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} />
+                      {/* Favorite heart */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavPlayer(player.id); }}
+                        className="absolute top-4 left-4 z-10 p-1 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-colors"
+                      >
+                        <Heart className={`h-4 w-4 transition-colors ${favPlayerIds.has(player.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
+                      </button>
                       {isSelected(player.id) && (
                         <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold z-10">
                           {compareSlots[0]?.id === player.id ? '1' : '2'}
@@ -200,8 +225,16 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="text-center py-20">
-                  <p className="text-muted-foreground text-lg">No players found</p>
-                  <p className="text-muted-foreground text-sm mt-1">Try a different search or filter</p>
+                  <p className="text-muted-foreground text-lg">
+                    {gridFilter === 'FAV_PLAYERS' ? 'No favorite players yet' :
+                     gridFilter === 'FAV_TEAMS' ? 'No favorite teams yet' :
+                     'No players found'}
+                  </p>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    {gridFilter === 'FAV_PLAYERS' ? 'Tap the ♥ on any player card to bookmark them' :
+                     gridFilter === 'FAV_TEAMS' ? 'Tap the ★ on any team in Teams view to bookmark them' :
+                     'Try a different search or filter'}
+                  </p>
                 </div>
               )}
             </motion.div>
@@ -213,7 +246,7 @@ const Index = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <TeamGrid onPlayerClick={handlePlayerClick} />
+              <TeamGrid onPlayerClick={handlePlayerClick} favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} />
             </motion.div>
           )}
         </AnimatePresence>
