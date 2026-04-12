@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerDetailModal } from '@/components/PlayerDetailModal';
@@ -10,6 +10,7 @@ import { usePlayersQuery, usePlayerStatsQuery, useTeamRecordsQuery } from '@/hoo
 import { useFavorites } from '@/hooks/use-favorites';
 import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '@/hooks/use-theme';
 
 const POSITIONS: PositionFilter[] = ['ALL', 'G', 'F', 'C'];
 
@@ -28,6 +29,7 @@ const Index = () => {
   const [compareOpen, setCompareOpen] = useState(false);
 
   const { favPlayerIds, favTeamIds, toggleFavPlayer, toggleFavTeam } = useFavorites();
+  const { theme, toggleTheme } = useTheme();
 
   const { data: players = [], isFetching: playersFetching } = usePlayersQuery();
   const playerIds = useMemo(() => players.map(p => p.id), [players]);
@@ -171,6 +173,14 @@ const Index = () => {
                   <Trophy className="h-4 w-4" /> Standings
                 </button>
               </div>
+
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                aria-label="Toggle dark mode"
+              >
+                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
