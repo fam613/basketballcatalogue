@@ -29,6 +29,7 @@ const Index = () => {
   const [compareOpen, setCompareOpen] = useState(false);
 
   const { favPlayerIds, favTeamIds, toggleFavPlayer, toggleFavTeam } = useFavorites();
+  const { theme, toggleTheme } = useTheme();
 
   const { data: players = [], isFetching: playersFetching } = usePlayersQuery();
   const playerIds = useMemo(() => players.map(p => p.id), [players]);
