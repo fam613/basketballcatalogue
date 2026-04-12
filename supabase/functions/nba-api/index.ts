@@ -1,6 +1,6 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 const API_BASE = 'https://api.balldontlie.io/v1'
@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get('BALLDONTLIE_API_KEY')
+    const apiKey = Deno.env.get('BALLDONTLIE_API_KEY')?.trim().replace(/^['\"]|['\"]$/g, '')
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'API key not configured' }), {
         status: 500,
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const apiUrl = new URL(`${API_BASE}/${endpoint}`)
     for (const [key, value] of url.searchParams.entries()) {
       if (key !== 'endpoint') {
-        apiUrl.searchParams.set(key, value)
+        apiUrl.searchParams.append(key, value)
       }
     }
 
