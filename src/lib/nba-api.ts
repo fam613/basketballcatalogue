@@ -134,7 +134,7 @@ export async function fetchPlayers(): Promise<NBAPlayer[]> {
     const maxPages = 4 // ~100 players
     
     for (let page = 0; page < maxPages; page++) {
-      const params: Record<string, string> = { per_page: '100' }
+      const params: Record<string, QueryValue> = { per_page: 100 }
       if (cursor) params.cursor = String(cursor)
       
       const data = await callNbaApi('players', params)
