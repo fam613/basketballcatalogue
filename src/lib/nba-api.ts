@@ -165,9 +165,35 @@ export async function fetchPlayers(): Promise<NBAPlayer[]> {
 }
 
 export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<number, PlayerStats>> {
-  // The free tier of balldontlie.io does not include stats/season_averages endpoints.
-  // Return fallback data directly. Upgrade to a paid plan to enable live stats.
-  return PLAYER_STATS
+  try {
+    const currentYear = new Date().getFullYear()
+    const season = new Date().getMonth() >= 9 ? currentYear : currentYear - 1
+
+    const results: Record<number, PlayerStats> = {}
+
+    // season_averages takes one player_id at a time — batch in chunks
+    const chunkSize = 10
+    for (let i = 0; i < playerIds.length; i += chunkSize) {
+      const chunk = playerIds.slice(i, i + chunkSize)
+      const promises = chunk.map(async (pid) => {
+        try {
+          const data = await callNbaApi('season_averages', { player_id: pid, season })
+          if (data.data && data.data.length > 0) {
+            results[pid] = mapApiStats(data.data[0])
+          }
+        } catch {
+          // skip individual failures
+        }
+      })
+      await Promise.all(promises)
+    }
+
+    // Merge with fallback for any missing players
+    return { ...PLAYER_STATS, ...results }
+  } catch (error) {
+    console.warn('Failed to fetch season averages, using fallback data:', error)
+    return PLAYER_STATS
+  }
 }
 
 export async function fetchTeams(): Promise<NBATeam[]> {
