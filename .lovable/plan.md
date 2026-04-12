@@ -1,42 +1,41 @@
 
 
-# NBA Player Card Catalogue 🏀
+# Live Auto-Updating NBA Stats
 
-A digital trading card collection for your son featuring every active NBA player with real stats.
+## Current State
+The app uses hardcoded data in `src/lib/nba-data.ts` — static stats that never change.
 
-## Design
-- **Modern/clean card style** with large, bold stat numbers
-- Purple-to-blue gradient accents, white cards, clean typography
-- Responsive grid layout that looks great on desktop and mobile
+## Goal
+Stats should update automatically after every game, so your son always sees the latest numbers.
 
-## Pages & Features
+## Approach: balldontlie.io API
 
-### 1. Home / Card Grid View
-- Search bar to find players by name
-- Filter chips: by **team** and by **position** (PG, SG, SF, PF, C)
-- Grid of player cards showing: name, team, position, and key stats (PPG, RPG, APG, MIN) in large numbers
-- Toggle button to switch between **Card Grid** and **Team Browse** views
+The balldontlie.io API now requires an API key (free tier available — 30 requests/min, $0/month). The free tier covers players, teams, stats, and games endpoints, which is everything we need.
 
-### 2. Team Browse View
-- All 30 NBA teams displayed with logos/colors
-- Click a team to see its roster as a card grid
-- Shows team W-L record at the top
+### What needs to happen
 
-### 3. Player Detail (click-to-expand modal)
-When you click any card, a modal opens with the full "back of the card" info:
-- **Stats**: PPG, RPG, APG, minutes per game (large numbers)
-- **Team Record**: current team W-L
-- **Career History**: all teams they've played for
-- **Draft Info**: round, pick number, year
-- **College**: where they played
-- **Position**: primary position
+1. **Get a free API key** — You'll create a free account at [balldontlie.io](https://www.balldontlie.io) and grab your API key. I'll securely store it in the project.
 
-## Data Source
-- **balldontlie.io API** (free, no key required) for live player data and season stats
-- Fallback: if API is down, show cached/sample data so the app still works
+2. **Build an API service layer** — Replace the hardcoded data with live API calls:
+   - Fetch all active players (paginated)
+   - Fetch season averages (PPG, RPG, APG, etc.) for each player
+   - Fetch team standings (W-L records)
+   - All routed through a Supabase Edge Function to keep the API key secure
 
-## Tech
-- React + Tailwind (already set up)
-- TanStack React Query for data fetching and caching
-- Framer Motion for smooth card hover animations and modal transitions
+3. **Add React Query for smart caching** — Install `@tanstack/react-query` to:
+   - Cache data so the app loads instantly on repeat visits
+   - Auto-refetch every 30 minutes (configurable) so stats stay fresh after games
+   - Show cached data while refreshing in the background (no loading spinners after first load)
+
+4. **Keep hardcoded data as fallback** — If the API is down or rate-limited, the app still works with the sample data already built in.
+
+### Technical details
+
+- **Edge Function** (`supabase/functions/nba-api/index.ts`): Proxies requests to balldontlie.io with the API key server-side. Endpoints: `/players`, `/season_averages`, `/teams`.
+- **API service** (`src/lib/nba-api.ts`): Client-side functions that call the edge function and transform responses into our existing `NBAPlayer`/`PlayerStats` types.
+- **React Query hooks** (`src/hooks/use-nba-data.ts`): `usePlayersQuery()`, `usePlayerStatsQuery()`, `useTeamsQuery()` with `staleTime: 30min` and `refetchInterval: 30min`.
+- **Update Index.tsx and components** to use the hooks instead of importing from `nba-data.ts`.
+
+### What you'll need to do
+Sign up for a free account at balldontlie.io — I'll prompt you to paste the API key when we're ready.
 
