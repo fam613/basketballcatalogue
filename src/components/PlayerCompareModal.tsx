@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
+import { PlayerAvatar } from './PlayerAvatar';
 import { motion } from 'framer-motion';
 
 interface PlayerCompareModalProps {
@@ -72,15 +73,9 @@ function CompareBar({ left, right, label, format }: { left: number; right: numbe
 }
 
 function PlayerHeader({ player }: { player: NBAPlayer }) {
-  const initials = `${player.first_name[0]}${player.last_name[0]}`;
   return (
     <div className="flex flex-col items-center text-center gap-2">
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold"
-        style={{ backgroundColor: player.team.color }}
-      >
-        {initials}
-      </div>
+      <PlayerAvatar player={player} size="lg" rounded="2xl" />
       <div>
         <div className="font-bold text-sm leading-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
           {player.first_name} {player.last_name}
