@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon, ArrowDownWideNarrow } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerDetailModal } from '@/components/PlayerDetailModal';
@@ -15,6 +15,15 @@ import { useTheme } from '@/hooks/use-theme';
 const POSITIONS: PositionFilter[] = ['ALL', 'G', 'F', 'C'];
 
 type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';
+type SortOption = 'default' | 'ppg' | 'rpg' | 'apg' | 'min';
+
+const SORT_OPTIONS: { key: SortOption; label: string }[] = [
+  { key: 'default', label: 'Default' },
+  { key: 'ppg', label: 'PPG' },
+  { key: 'rpg', label: 'RPG' },
+  { key: 'apg', label: 'APG' },
+  { key: 'min', label: 'MIN' },
+];
 
 const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
