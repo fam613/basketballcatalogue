@@ -45,7 +45,6 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
                 {player.team.abbreviation} · #{player.jersey_number}
                 {teamRecord && <span className="normal-case"> · {teamRecord.wins}W-{teamRecord.losses}L</span>}
               </div>
-              </div>
               <div className="font-bold text-lg leading-tight truncate" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                 {player.first_name} {player.last_name}
               </div>
