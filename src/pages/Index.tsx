@@ -10,6 +10,7 @@ import { usePlayersQuery, usePlayerStatsQuery, useTeamRecordsQuery } from '@/hoo
 import { useFavorites } from '@/hooks/use-favorites';
 import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '@/hooks/use-theme';
 
 const POSITIONS: PositionFilter[] = ['ALL', 'G', 'F', 'C'];
 
