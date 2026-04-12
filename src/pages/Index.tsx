@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon, ArrowDownWideNarrow } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerDetailModal } from '@/components/PlayerDetailModal';
@@ -15,11 +15,21 @@ import { useTheme } from '@/hooks/use-theme';
 const POSITIONS: PositionFilter[] = ['ALL', 'G', 'F', 'C'];
 
 type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';
+type SortOption = 'default' | 'ppg' | 'rpg' | 'apg' | 'min';
+
+const SORT_OPTIONS: { key: SortOption; label: string }[] = [
+  { key: 'default', label: 'Default' },
+  { key: 'ppg', label: 'PPG' },
+  { key: 'rpg', label: 'RPG' },
+  { key: 'apg', label: 'APG' },
+  { key: 'min', label: 'MIN' },
+];
 
 const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [gridFilter, setGridFilter] = useState<GridFilter>('ALL');
+  const [sortBy, setSortBy] = useState<SortOption>('default');
   const [selectedPlayer, setSelectedPlayer] = useState<NBAPlayer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -54,8 +64,26 @@ const Index = () => {
     } else if (gridFilter !== 'ALL') {
       result = result.filter(p => p.position.includes(gridFilter.charAt(0)));
     }
+
+    if (sortBy !== 'default') {
+      result.sort((a, b) => {
+        const sa = statsMap[a.id];
+        const sb = statsMap[b.id];
+        if (!sa && !sb) return 0;
+        if (!sa) return 1;
+        if (!sb) return -1;
+        switch (sortBy) {
+          case 'ppg': return sb.pts - sa.pts;
+          case 'rpg': return sb.reb - sa.reb;
+          case 'apg': return sb.ast - sa.ast;
+          case 'min': return parseFloat(sb.min) - parseFloat(sa.min);
+          default: return 0;
+        }
+      });
+    }
+
     return result;
-  }, [players, searchQuery, gridFilter, favPlayerIds, favTeamIds]);
+  }, [players, searchQuery, gridFilter, favPlayerIds, favTeamIds, sortBy, statsMap]);
 
   const handlePlayerClick = (player: NBAPlayer) => {
     if (compareMode) {
@@ -201,6 +229,23 @@ const Index = () => {
                   {label}
                 </button>
               ))}
+
+              <div className="ml-auto flex items-center gap-1.5">
+                <ArrowDownWideNarrow className="h-3 w-3 text-muted-foreground" />
+                {SORT_OPTIONS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setSortBy(key)}
+                    className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                      sortBy === key
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
