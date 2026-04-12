@@ -217,7 +217,7 @@ const Index = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredPlayers.map((player, i) => (
                     <div key={player.id} className={`relative ${isSelected(player.id) ? 'ring-2 ring-primary rounded-2xl' : ''}`}>
-                      <PlayerCard player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} />
+                      <PlayerCard player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} teamRecord={teamRecords[player.team.id]} />
                       {/* Favorite heart */}
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleFavPlayer(player.id); }}
