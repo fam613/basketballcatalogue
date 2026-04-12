@@ -10,6 +10,7 @@ interface TeamGridProps {
   onPlayerClick: (player: NBAPlayer) => void;
   favTeamIds?: Set<number>;
   onToggleFavTeam?: (id: number) => void;
+  teamRecords?: Record<number, { wins: number; losses: number }>;
 }
 
 function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClick: () => void; isFav?: boolean; onToggleFav?: () => void }) {
@@ -61,8 +62,13 @@ function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClic
   );
 }
 
-export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam }: TeamGridProps) {
+export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecords = {} }: TeamGridProps) {
   const [selectedTeam, setSelectedTeam] = useState<NBATeam | null>(null);
+
+  const teamsWithRecords = NBA_TEAMS.map(t => {
+    const rec = teamRecords[t.id];
+    return rec ? { ...t, wins: rec.wins, losses: rec.losses } : t;
+  });
 
   if (selectedTeam) {
     const players = getPlayersForTeam(selectedTeam.abbreviation);
@@ -101,8 +107,8 @@ export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam }: TeamGri
     );
   }
 
-  const eastTeams = NBA_TEAMS.filter(t => t.conference === 'East').sort((a, b) => b.wins - a.wins);
-  const westTeams = NBA_TEAMS.filter(t => t.conference === 'West').sort((a, b) => b.wins - a.wins);
+  const eastTeams = teamsWithRecords.filter(t => t.conference === 'East').sort((a, b) => b.wins - a.wins);
+  const westTeams = teamsWithRecords.filter(t => t.conference === 'West').sort((a, b) => b.wins - a.wins);
 
   return (
     <div className="space-y-8">

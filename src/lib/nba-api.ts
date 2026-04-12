@@ -178,3 +178,54 @@ export async function fetchTeams(): Promise<NBATeam[]> {
     return NBA_TEAMS
   }
 }
+
+export async function fetchTeamRecords(): Promise<Record<number, { wins: number; losses: number }>> {
+  try {
+    const currentYear = new Date().getFullYear()
+    const season = new Date().getMonth() >= 9 ? currentYear : currentYear - 1
+
+    const records: Record<number, { wins: number; losses: number }> = {}
+    let cursor: number | null = null
+    const maxPages = 15 // ~1500 games covers a full season (1230 regular season)
+
+    for (let page = 0; page < maxPages; page++) {
+      const params: Record<string, QueryValue> = {
+        per_page: 100,
+        seasons: [season],
+        postseason: false,
+      }
+      if (cursor) params.cursor = cursor
+
+      const data = await callNbaApi('games', params)
+
+      if (!data.data || !Array.isArray(data.data)) break
+
+      for (const game of data.data) {
+        if (game.status !== 'Final') continue
+
+        const homeId = game.home_team?.id
+        const visitorId = game.visitor_team?.id
+        if (!homeId || !visitorId) continue
+
+        if (!records[homeId]) records[homeId] = { wins: 0, losses: 0 }
+        if (!records[visitorId]) records[visitorId] = { wins: 0, losses: 0 }
+
+        if (game.home_team_score > game.visitor_team_score) {
+          records[homeId].wins++
+          records[visitorId].losses++
+        } else {
+          records[visitorId].wins++
+          records[homeId].losses++
+        }
+      }
+
+      if (!data.meta?.next_cursor) break
+      cursor = data.meta.next_cursor
+    }
+
+    return records
+  } catch (error) {
+    console.warn('Failed to fetch team records from games API:', error)
+    return {}
+  }
+}
