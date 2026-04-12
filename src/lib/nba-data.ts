@@ -1,0 +1,156 @@
+import { NBATeam, NBAPlayer, PlayerStats } from './types';
+
+export const NBA_TEAMS: NBATeam[] = [
+  { id: 1, abbreviation: "ATL", city: "Atlanta", conference: "East", division: "Southeast", full_name: "Atlanta Hawks", name: "Hawks", wins: 36, losses: 46, color: "#E03A3E", secondaryColor: "#C1D32F" },
+  { id: 2, abbreviation: "BOS", city: "Boston", conference: "East", division: "Atlantic", full_name: "Boston Celtics", name: "Celtics", wins: 64, losses: 18, color: "#007A33", secondaryColor: "#BA9653" },
+  { id: 3, abbreviation: "BKN", city: "Brooklyn", conference: "East", division: "Atlantic", full_name: "Brooklyn Nets", name: "Nets", wins: 32, losses: 50, color: "#000000", secondaryColor: "#FFFFFF" },
+  { id: 4, abbreviation: "CHA", city: "Charlotte", conference: "East", division: "Southeast", full_name: "Charlotte Hornets", name: "Hornets", wins: 21, losses: 61, color: "#1D1160", secondaryColor: "#00788C" },
+  { id: 5, abbreviation: "CHI", city: "Chicago", conference: "East", division: "Central", full_name: "Chicago Bulls", name: "Bulls", wins: 39, losses: 43, color: "#CE1141", secondaryColor: "#000000" },
+  { id: 6, abbreviation: "CLE", city: "Cleveland", conference: "East", division: "Central", full_name: "Cleveland Cavaliers", name: "Cavaliers", wins: 48, losses: 34, color: "#860038", secondaryColor: "#FDBB30" },
+  { id: 7, abbreviation: "DAL", city: "Dallas", conference: "West", division: "Southwest", full_name: "Dallas Mavericks", name: "Mavericks", wins: 50, losses: 32, color: "#00538C", secondaryColor: "#002B5E" },
+  { id: 8, abbreviation: "DEN", city: "Denver", conference: "West", division: "Northwest", full_name: "Denver Nuggets", name: "Nuggets", wins: 57, losses: 25, color: "#0E2240", secondaryColor: "#FEC524" },
+  { id: 9, abbreviation: "DET", city: "Detroit", conference: "East", division: "Central", full_name: "Detroit Pistons", name: "Pistons", wins: 14, losses: 68, color: "#C8102E", secondaryColor: "#1D42BA" },
+  { id: 10, abbreviation: "GSW", city: "Golden State", conference: "West", division: "Pacific", full_name: "Golden State Warriors", name: "Warriors", wins: 46, losses: 36, color: "#1D428A", secondaryColor: "#FFC72C" },
+  { id: 11, abbreviation: "HOU", city: "Houston", conference: "West", division: "Southwest", full_name: "Houston Rockets", name: "Rockets", wins: 41, losses: 41, color: "#CE1141", secondaryColor: "#000000" },
+  { id: 12, abbreviation: "IND", city: "Indiana", conference: "East", division: "Central", full_name: "Indiana Pacers", name: "Pacers", wins: 47, losses: 35, color: "#002D62", secondaryColor: "#FDBB30" },
+  { id: 13, abbreviation: "LAC", city: "Los Angeles", conference: "West", division: "Pacific", full_name: "LA Clippers", name: "Clippers", wins: 51, losses: 31, color: "#C8102E", secondaryColor: "#1D428A" },
+  { id: 14, abbreviation: "LAL", city: "Los Angeles", conference: "West", division: "Pacific", full_name: "Los Angeles Lakers", name: "Lakers", wins: 47, losses: 35, color: "#552583", secondaryColor: "#FDB927" },
+  { id: 15, abbreviation: "MEM", city: "Memphis", conference: "West", division: "Southwest", full_name: "Memphis Grizzlies", name: "Grizzlies", wins: 27, losses: 55, color: "#5D76A9", secondaryColor: "#12173F" },
+  { id: 16, abbreviation: "MIA", city: "Miami", conference: "East", division: "Southeast", full_name: "Miami Heat", name: "Heat", wins: 46, losses: 36, color: "#98002E", secondaryColor: "#F9A01B" },
+  { id: 17, abbreviation: "MIL", city: "Milwaukee", conference: "East", division: "Central", full_name: "Milwaukee Bucks", name: "Bucks", wins: 49, losses: 33, color: "#00471B", secondaryColor: "#EEE1C6" },
+  { id: 18, abbreviation: "MIN", city: "Minnesota", conference: "West", division: "Northwest", full_name: "Minnesota Timberwolves", name: "Timberwolves", wins: 56, losses: 26, color: "#0C2340", secondaryColor: "#236192" },
+  { id: 19, abbreviation: "NOP", city: "New Orleans", conference: "West", division: "Southwest", full_name: "New Orleans Pelicans", name: "Pelicans", wins: 49, losses: 33, color: "#0C2340", secondaryColor: "#C8102E" },
+  { id: 20, abbreviation: "NYK", city: "New York", conference: "East", division: "Atlantic", full_name: "New York Knicks", name: "Knicks", wins: 50, losses: 32, color: "#006BB6", secondaryColor: "#F58426" },
+  { id: 21, abbreviation: "OKC", city: "Oklahoma City", conference: "West", division: "Northwest", full_name: "Oklahoma City Thunder", name: "Thunder", wins: 57, losses: 25, color: "#007AC1", secondaryColor: "#EF6100" },
+  { id: 22, abbreviation: "ORL", city: "Orlando", conference: "East", division: "Southeast", full_name: "Orlando Magic", name: "Magic", wins: 47, losses: 35, color: "#0077C0", secondaryColor: "#C4CED4" },
+  { id: 23, abbreviation: "PHI", city: "Philadelphia", conference: "East", division: "Atlantic", full_name: "Philadelphia 76ers", name: "76ers", wins: 47, losses: 35, color: "#006BB6", secondaryColor: "#ED174C" },
+  { id: 24, abbreviation: "PHX", city: "Phoenix", conference: "West", division: "Pacific", full_name: "Phoenix Suns", name: "Suns", wins: 49, losses: 33, color: "#1D1160", secondaryColor: "#E56020" },
+  { id: 25, abbreviation: "POR", city: "Portland", conference: "West", division: "Northwest", full_name: "Portland Trail Blazers", name: "Trail Blazers", wins: 21, losses: 61, color: "#E03A3E", secondaryColor: "#000000" },
+  { id: 26, abbreviation: "SAC", city: "Sacramento", conference: "West", division: "Pacific", full_name: "Sacramento Kings", name: "Kings", wins: 46, losses: 36, color: "#5A2D81", secondaryColor: "#63727A" },
+  { id: 27, abbreviation: "SAS", city: "San Antonio", conference: "West", division: "Southwest", full_name: "San Antonio Spurs", name: "Spurs", wins: 22, losses: 60, color: "#C4CED4", secondaryColor: "#000000" },
+  { id: 28, abbreviation: "TOR", city: "Toronto", conference: "East", division: "Atlantic", full_name: "Toronto Raptors", name: "Raptors", wins: 25, losses: 57, color: "#CE1141", secondaryColor: "#000000" },
+  { id: 29, abbreviation: "UTA", city: "Utah", conference: "West", division: "Northwest", full_name: "Utah Jazz", name: "Jazz", wins: 31, losses: 51, color: "#002B5C", secondaryColor: "#00471B" },
+  { id: 30, abbreviation: "WAS", city: "Washington", conference: "East", division: "Southeast", full_name: "Washington Wizards", name: "Wizards", wins: 15, losses: 67, color: "#002B5C", secondaryColor: "#E31837" },
+];
+
+const t = (abbr: string) => NBA_TEAMS.find(t => t.abbreviation === abbr)!;
+
+export const NBA_PLAYERS: NBAPlayer[] = [
+  { id: 1, first_name: "LeBron", last_name: "James", position: "F", height: "6-9", weight: "250", jersey_number: "23", college: "St. Vincent-St. Mary HS", country: "USA", draft_year: 2003, draft_round: 1, draft_number: 1, team: t("LAL"), career_teams: ["CLE", "MIA", "CLE", "LAL"] },
+  { id: 2, first_name: "Stephen", last_name: "Curry", position: "G", height: "6-2", weight: "185", jersey_number: "30", college: "Davidson", country: "USA", draft_year: 2009, draft_round: 1, draft_number: 7, team: t("GSW"), career_teams: ["GSW"] },
+  { id: 3, first_name: "Kevin", last_name: "Durant", position: "F", height: "6-10", weight: "240", jersey_number: "35", college: "Texas", country: "USA", draft_year: 2007, draft_round: 1, draft_number: 2, team: t("PHX"), career_teams: ["SEA", "OKC", "GSW", "BKN", "PHX"] },
+  { id: 4, first_name: "Giannis", last_name: "Antetokounmpo", position: "F", height: "6-11", weight: "243", jersey_number: "34", college: "N/A", country: "Greece", draft_year: 2013, draft_round: 1, draft_number: 15, team: t("MIL"), career_teams: ["MIL"] },
+  { id: 5, first_name: "Luka", last_name: "Dončić", position: "G", height: "6-7", weight: "230", jersey_number: "77", college: "N/A", country: "Slovenia", draft_year: 2018, draft_round: 1, draft_number: 3, team: t("DAL"), career_teams: ["DAL"] },
+  { id: 6, first_name: "Nikola", last_name: "Jokić", position: "C", height: "6-11", weight: "284", jersey_number: "15", college: "N/A", country: "Serbia", draft_year: 2014, draft_round: 2, draft_number: 41, team: t("DEN"), career_teams: ["DEN"] },
+  { id: 7, first_name: "Joel", last_name: "Embiid", position: "C", height: "7-0", weight: "280", jersey_number: "21", college: "Kansas", country: "Cameroon", draft_year: 2014, draft_round: 1, draft_number: 3, team: t("PHI"), career_teams: ["PHI"] },
+  { id: 8, first_name: "Jayson", last_name: "Tatum", position: "F", height: "6-8", weight: "210", jersey_number: "0", college: "Duke", country: "USA", draft_year: 2017, draft_round: 1, draft_number: 3, team: t("BOS"), career_teams: ["BOS"] },
+  { id: 9, first_name: "Jimmy", last_name: "Butler", position: "F", height: "6-7", weight: "230", jersey_number: "22", college: "Marquette", country: "USA", draft_year: 2011, draft_round: 1, draft_number: 30, team: t("MIA"), career_teams: ["CHI", "MIN", "PHI", "MIA"] },
+  { id: 10, first_name: "Anthony", last_name: "Davis", position: "F-C", height: "6-10", weight: "253", jersey_number: "3", college: "Kentucky", country: "USA", draft_year: 2012, draft_round: 1, draft_number: 1, team: t("LAL"), career_teams: ["NOP", "LAL"] },
+  { id: 11, first_name: "Damian", last_name: "Lillard", position: "G", height: "6-2", weight: "195", jersey_number: "0", college: "Weber State", country: "USA", draft_year: 2012, draft_round: 1, draft_number: 6, team: t("MIL"), career_teams: ["POR", "MIL"] },
+  { id: 12, first_name: "Shai", last_name: "Gilgeous-Alexander", position: "G", height: "6-6", weight: "195", jersey_number: "2", college: "Kentucky", country: "Canada", draft_year: 2018, draft_round: 1, draft_number: 11, team: t("OKC"), career_teams: ["LAC", "OKC"] },
+  { id: 13, first_name: "Devin", last_name: "Booker", position: "G", height: "6-5", weight: "206", jersey_number: "1", college: "Kentucky", country: "USA", draft_year: 2015, draft_round: 1, draft_number: 13, team: t("PHX"), career_teams: ["PHX"] },
+  { id: 14, first_name: "Ja", last_name: "Morant", position: "G", height: "6-3", weight: "174", jersey_number: "12", college: "Murray State", country: "USA", draft_year: 2019, draft_round: 1, draft_number: 2, team: t("MEM"), career_teams: ["MEM"] },
+  { id: 15, first_name: "Trae", last_name: "Young", position: "G", height: "6-1", weight: "164", jersey_number: "11", college: "Oklahoma", country: "USA", draft_year: 2018, draft_round: 1, draft_number: 5, team: t("ATL"), career_teams: ["ATL"] },
+  { id: 16, first_name: "Donovan", last_name: "Mitchell", position: "G", height: "6-1", weight: "215", jersey_number: "45", college: "Louisville", country: "USA", draft_year: 2017, draft_round: 1, draft_number: 13, team: t("CLE"), career_teams: ["UTA", "CLE"] },
+  { id: 17, first_name: "Kawhi", last_name: "Leonard", position: "F", height: "6-7", weight: "225", jersey_number: "2", college: "San Diego State", country: "USA", draft_year: 2011, draft_round: 1, draft_number: 15, team: t("LAC"), career_teams: ["SAS", "TOR", "LAC"] },
+  { id: 18, first_name: "Paul", last_name: "George", position: "F", height: "6-8", weight: "220", jersey_number: "13", college: "Fresno State", country: "USA", draft_year: 2010, draft_round: 1, draft_number: 10, team: t("PHI"), career_teams: ["IND", "OKC", "LAC", "PHI"] },
+  { id: 19, first_name: "Anthony", last_name: "Edwards", position: "G", height: "6-4", weight: "225", jersey_number: "5", college: "Georgia", country: "USA", draft_year: 2020, draft_round: 1, draft_number: 1, team: t("MIN"), career_teams: ["MIN"] },
+  { id: 20, first_name: "Tyrese", last_name: "Haliburton", position: "G", height: "6-5", weight: "185", jersey_number: "0", college: "Iowa State", country: "USA", draft_year: 2020, draft_round: 1, draft_number: 12, team: t("IND"), career_teams: ["SAC", "IND"] },
+  { id: 21, first_name: "Jaylen", last_name: "Brown", position: "G-F", height: "6-6", weight: "223", jersey_number: "7", college: "Cal", country: "USA", draft_year: 2016, draft_round: 1, draft_number: 3, team: t("BOS"), career_teams: ["BOS"] },
+  { id: 22, first_name: "De'Aaron", last_name: "Fox", position: "G", height: "6-3", weight: "185", jersey_number: "5", college: "Kentucky", country: "USA", draft_year: 2017, draft_round: 1, draft_number: 5, team: t("SAC"), career_teams: ["SAC"] },
+  { id: 23, first_name: "Jalen", last_name: "Brunson", position: "G", height: "6-2", weight: "190", jersey_number: "11", college: "Villanova", country: "USA", draft_year: 2018, draft_round: 2, draft_number: 33, team: t("NYK"), career_teams: ["DAL", "NYK"] },
+  { id: 24, first_name: "Bam", last_name: "Adebayo", position: "C", height: "6-9", weight: "255", jersey_number: "13", college: "Kentucky", country: "USA", draft_year: 2017, draft_round: 1, draft_number: 14, team: t("MIA"), career_teams: ["MIA"] },
+  { id: 25, first_name: "Karl-Anthony", last_name: "Towns", position: "C", height: "6-11", weight: "248", jersey_number: "32", college: "Kentucky", country: "USA", draft_year: 2015, draft_round: 1, draft_number: 1, team: t("NYK"), career_teams: ["MIN", "NYK"] },
+  { id: 26, first_name: "Paolo", last_name: "Banchero", position: "F", height: "6-10", weight: "250", jersey_number: "5", college: "Duke", country: "USA", draft_year: 2022, draft_round: 1, draft_number: 1, team: t("ORL"), career_teams: ["ORL"] },
+  { id: 27, first_name: "Victor", last_name: "Wembanyama", position: "C", height: "7-4", weight: "210", jersey_number: "1", college: "N/A", country: "France", draft_year: 2023, draft_round: 1, draft_number: 1, team: t("SAS"), career_teams: ["SAS"] },
+  { id: 28, first_name: "Zion", last_name: "Williamson", position: "F", height: "6-6", weight: "284", jersey_number: "1", college: "Duke", country: "USA", draft_year: 2019, draft_round: 1, draft_number: 1, team: t("NOP"), career_teams: ["NOP"] },
+  { id: 29, first_name: "Chet", last_name: "Holmgren", position: "C", height: "7-0", weight: "195", jersey_number: "7", college: "Gonzaga", country: "USA", draft_year: 2022, draft_round: 1, draft_number: 2, team: t("OKC"), career_teams: ["OKC"] },
+  { id: 30, first_name: "LaMelo", last_name: "Ball", position: "G", height: "6-7", weight: "180", jersey_number: "1", college: "N/A", country: "USA", draft_year: 2020, draft_round: 1, draft_number: 3, team: t("CHA"), career_teams: ["CHA"] },
+  { id: 31, first_name: "Kyrie", last_name: "Irving", position: "G", height: "6-2", weight: "195", jersey_number: "11", college: "Duke", country: "USA", draft_year: 2011, draft_round: 1, draft_number: 1, team: t("DAL"), career_teams: ["CLE", "BOS", "BKN", "DAL"] },
+  { id: 32, first_name: "Domantas", last_name: "Sabonis", position: "C", height: "6-10", weight: "240", jersey_number: "10", college: "Gonzaga", country: "USA", draft_year: 2016, draft_round: 1, draft_number: 11, team: t("SAC"), career_teams: ["OKC", "IND", "SAC"] },
+  { id: 33, first_name: "DeMar", last_name: "DeRozan", position: "F", height: "6-6", weight: "220", jersey_number: "10", college: "USC", country: "USA", draft_year: 2009, draft_round: 1, draft_number: 9, team: t("CHI"), career_teams: ["TOR", "SAS", "CHI"] },
+  { id: 34, first_name: "Pascal", last_name: "Siakam", position: "F", height: "6-8", weight: "230", jersey_number: "43", college: "New Mexico State", country: "Cameroon", draft_year: 2016, draft_round: 1, draft_number: 27, team: t("IND"), career_teams: ["TOR", "IND"] },
+  { id: 35, first_name: "Lauri", last_name: "Markkanen", position: "F", height: "7-0", weight: "240", jersey_number: "23", college: "Arizona", country: "Finland", draft_year: 2017, draft_round: 1, draft_number: 7, team: t("UTA"), career_teams: ["CHI", "CLE", "UTA"] },
+  { id: 36, first_name: "Jaren", last_name: "Jackson Jr.", position: "F-C", height: "6-11", weight: "242", jersey_number: "13", college: "Michigan State", country: "USA", draft_year: 2018, draft_round: 1, draft_number: 4, team: t("MEM"), career_teams: ["MEM"] },
+  { id: 37, first_name: "Scottie", last_name: "Barnes", position: "F", height: "6-7", weight: "225", jersey_number: "4", college: "Florida State", country: "USA", draft_year: 2021, draft_round: 1, draft_number: 4, team: t("TOR"), career_teams: ["TOR"] },
+  { id: 38, first_name: "Evan", last_name: "Mobley", position: "C", height: "6-11", weight: "215", jersey_number: "4", college: "USC", country: "USA", draft_year: 2021, draft_round: 1, draft_number: 3, team: t("CLE"), career_teams: ["CLE"] },
+  { id: 39, first_name: "Cade", last_name: "Cunningham", position: "G", height: "6-6", weight: "220", jersey_number: "2", college: "Oklahoma State", country: "USA", draft_year: 2021, draft_round: 1, draft_number: 1, team: t("DET"), career_teams: ["DET"] },
+  { id: 40, first_name: "Jalen", last_name: "Williams", position: "G-F", height: "6-6", weight: "195", jersey_number: "8", college: "Santa Clara", country: "USA", draft_year: 2022, draft_round: 1, draft_number: 12, team: t("OKC"), career_teams: ["OKC"] },
+  { id: 41, first_name: "Franz", last_name: "Wagner", position: "F", height: "6-10", weight: "220", jersey_number: "22", college: "Michigan", country: "Germany", draft_year: 2021, draft_round: 1, draft_number: 8, team: t("ORL"), career_teams: ["ORL"] },
+  { id: 42, first_name: "Mikal", last_name: "Bridges", position: "F", height: "6-6", weight: "209", jersey_number: "1", college: "Villanova", country: "USA", draft_year: 2018, draft_round: 1, draft_number: 10, team: t("NYK"), career_teams: ["PHX", "BKN", "NYK"] },
+  { id: 43, first_name: "Brandon", last_name: "Ingram", position: "F", height: "6-8", weight: "190", jersey_number: "14", college: "Duke", country: "USA", draft_year: 2016, draft_round: 1, draft_number: 2, team: t("NOP"), career_teams: ["LAL", "NOP"] },
+  { id: 44, first_name: "Alperen", last_name: "Şengün", position: "C", height: "6-9", weight: "243", jersey_number: "28", college: "N/A", country: "Turkey", draft_year: 2021, draft_round: 1, draft_number: 16, team: t("HOU"), career_teams: ["HOU"] },
+  { id: 45, first_name: "Derrick", last_name: "White", position: "G", height: "6-4", weight: "190", jersey_number: "9", college: "Colorado", country: "USA", draft_year: 2017, draft_round: 1, draft_number: 29, team: t("BOS"), career_teams: ["SAS", "BOS"] },
+  { id: 46, first_name: "Darius", last_name: "Garland", position: "G", height: "6-1", weight: "192", jersey_number: "10", college: "Vanderbilt", country: "USA", draft_year: 2019, draft_round: 1, draft_number: 5, team: t("CLE"), career_teams: ["CLE"] },
+  { id: 47, first_name: "Jalen", last_name: "Green", position: "G", height: "6-4", weight: "186", jersey_number: "4", college: "G League Ignite", country: "USA", draft_year: 2021, draft_round: 1, draft_number: 2, team: t("HOU"), career_teams: ["HOU"] },
+  { id: 48, first_name: "Kristaps", last_name: "Porziņģis", position: "C", height: "7-2", weight: "240", jersey_number: "8", college: "N/A", country: "Latvia", draft_year: 2015, draft_round: 1, draft_number: 4, team: t("BOS"), career_teams: ["NYK", "DAL", "WAS", "BOS"] },
+];
+
+export const PLAYER_STATS: Record<number, PlayerStats> = {
+  1: { player_id: 1, pts: 25.7, reb: 7.3, ast: 8.3, min: "35.5", gp: 71, stl: 1.3, blk: 0.5, fg_pct: 0.540, fg3_pct: 0.410, ft_pct: 0.750, turnover: 3.5 },
+  2: { player_id: 2, pts: 26.4, reb: 4.5, ast: 5.1, min: "32.7", gp: 74, stl: 0.7, blk: 0.4, fg_pct: 0.450, fg3_pct: 0.408, ft_pct: 0.923, turnover: 2.8 },
+  3: { player_id: 3, pts: 27.1, reb: 6.6, ast: 5.0, min: "37.2", gp: 75, stl: 0.9, blk: 1.2, fg_pct: 0.523, fg3_pct: 0.413, ft_pct: 0.856, turnover: 3.3 },
+  4: { player_id: 4, pts: 30.4, reb: 11.5, ast: 6.5, min: "35.2", gp: 73, stl: 1.2, blk: 1.1, fg_pct: 0.611, fg3_pct: 0.274, ft_pct: 0.657, turnover: 3.4 },
+  5: { player_id: 5, pts: 33.9, reb: 9.2, ast: 9.8, min: "37.5", gp: 70, stl: 1.4, blk: 0.5, fg_pct: 0.487, fg3_pct: 0.356, ft_pct: 0.786, turnover: 4.0 },
+  6: { player_id: 6, pts: 26.4, reb: 12.4, ast: 9.0, min: "34.6", gp: 79, stl: 1.4, blk: 0.9, fg_pct: 0.583, fg3_pct: 0.354, ft_pct: 0.817, turnover: 3.0 },
+  7: { player_id: 7, pts: 34.7, reb: 11.0, ast: 5.6, min: "33.6", gp: 39, stl: 1.2, blk: 1.7, fg_pct: 0.529, fg3_pct: 0.388, ft_pct: 0.883, turnover: 3.8 },
+  8: { player_id: 8, pts: 26.9, reb: 8.1, ast: 4.9, min: "35.8", gp: 74, stl: 1.0, blk: 0.6, fg_pct: 0.471, fg3_pct: 0.374, ft_pct: 0.832, turnover: 2.5 },
+  9: { player_id: 9, pts: 20.8, reb: 5.3, ast: 5.0, min: "33.4", gp: 60, stl: 1.3, blk: 0.3, fg_pct: 0.497, fg3_pct: 0.358, ft_pct: 0.860, turnover: 2.1 },
+  10: { player_id: 10, pts: 24.7, reb: 12.6, ast: 3.5, min: "35.4", gp: 76, stl: 1.2, blk: 2.3, fg_pct: 0.556, fg3_pct: 0.276, ft_pct: 0.814, turnover: 2.1 },
+  11: { player_id: 11, pts: 24.3, reb: 4.4, ast: 7.0, min: "35.4", gp: 73, stl: 1.0, blk: 0.3, fg_pct: 0.424, fg3_pct: 0.354, ft_pct: 0.920, turnover: 2.7 },
+  12: { player_id: 12, pts: 30.1, reb: 5.5, ast: 6.2, min: "34.0", gp: 75, stl: 2.0, blk: 0.9, fg_pct: 0.535, fg3_pct: 0.353, ft_pct: 0.874, turnover: 2.8 },
+  13: { player_id: 13, pts: 27.1, reb: 4.5, ast: 6.9, min: "36.4", gp: 68, stl: 1.0, blk: 0.4, fg_pct: 0.493, fg3_pct: 0.365, ft_pct: 0.877, turnover: 2.5 },
+  14: { player_id: 14, pts: 25.1, reb: 5.6, ast: 8.1, min: "32.5", gp: 9, stl: 1.1, blk: 0.5, fg_pct: 0.474, fg3_pct: 0.310, ft_pct: 0.781, turnover: 3.3 },
+  15: { player_id: 15, pts: 25.7, reb: 2.8, ast: 10.8, min: "34.8", gp: 54, stl: 1.3, blk: 0.2, fg_pct: 0.431, fg3_pct: 0.374, ft_pct: 0.863, turnover: 4.2 },
+  16: { player_id: 16, pts: 26.6, reb: 5.1, ast: 6.1, min: "34.5", gp: 55, stl: 1.8, blk: 0.5, fg_pct: 0.463, fg3_pct: 0.362, ft_pct: 0.860, turnover: 2.9 },
+  17: { player_id: 17, pts: 23.7, reb: 6.1, ast: 3.6, min: "34.5", gp: 68, stl: 1.6, blk: 0.9, fg_pct: 0.527, fg3_pct: 0.416, ft_pct: 0.887, turnover: 2.0 },
+  18: { player_id: 18, pts: 22.6, reb: 5.2, ast: 3.5, min: "34.8", gp: 74, stl: 1.5, blk: 0.4, fg_pct: 0.474, fg3_pct: 0.413, ft_pct: 0.907, turnover: 2.5 },
+  19: { player_id: 19, pts: 25.9, reb: 5.4, ast: 5.1, min: "35.7", gp: 79, stl: 1.3, blk: 0.5, fg_pct: 0.461, fg3_pct: 0.362, ft_pct: 0.833, turnover: 3.2 },
+  20: { player_id: 20, pts: 20.1, reb: 3.7, ast: 10.9, min: "33.1", gp: 69, stl: 1.2, blk: 0.3, fg_pct: 0.472, fg3_pct: 0.362, ft_pct: 0.851, turnover: 2.6 },
+  21: { player_id: 21, pts: 23.0, reb: 5.5, ast: 3.6, min: "33.7", gp: 70, stl: 1.2, blk: 0.5, fg_pct: 0.497, fg3_pct: 0.354, ft_pct: 0.708, turnover: 2.6 },
+  22: { player_id: 22, pts: 26.6, reb: 4.6, ast: 6.1, min: "35.8", gp: 58, stl: 2.0, blk: 0.5, fg_pct: 0.466, fg3_pct: 0.367, ft_pct: 0.738, turnover: 3.0 },
+  23: { player_id: 23, pts: 28.7, reb: 3.5, ast: 6.7, min: "35.4", gp: 77, stl: 0.9, blk: 0.2, fg_pct: 0.479, fg3_pct: 0.398, ft_pct: 0.847, turnover: 2.4 },
+  24: { player_id: 24, pts: 19.3, reb: 10.4, ast: 3.9, min: "34.0", gp: 71, stl: 1.1, blk: 0.9, fg_pct: 0.520, fg3_pct: 0.263, ft_pct: 0.757, turnover: 2.6 },
+  25: { player_id: 25, pts: 21.8, reb: 8.3, ast: 3.0, min: "32.2", gp: 62, stl: 0.7, blk: 0.7, fg_pct: 0.504, fg3_pct: 0.414, ft_pct: 0.838, turnover: 2.5 },
+  26: { player_id: 26, pts: 22.6, reb: 6.9, ast: 5.4, min: "34.5", gp: 80, stl: 1.0, blk: 0.6, fg_pct: 0.455, fg3_pct: 0.332, ft_pct: 0.733, turnover: 3.0 },
+  27: { player_id: 27, pts: 21.4, reb: 10.6, ast: 3.9, min: "29.7", gp: 71, stl: 1.2, blk: 3.6, fg_pct: 0.465, fg3_pct: 0.326, ft_pct: 0.792, turnover: 3.7 },
+  28: { player_id: 28, pts: 22.9, reb: 5.8, ast: 5.0, min: "29.0", gp: 70, stl: 1.1, blk: 0.7, fg_pct: 0.570, fg3_pct: 0.332, ft_pct: 0.684, turnover: 3.0 },
+  29: { player_id: 29, pts: 16.5, reb: 7.9, ast: 2.4, min: "29.4", gp: 82, stl: 0.8, blk: 2.3, fg_pct: 0.531, fg3_pct: 0.373, ft_pct: 0.790, turnover: 1.7 },
+  30: { player_id: 30, pts: 23.9, reb: 5.1, ast: 8.0, min: "33.5", gp: 22, stl: 1.8, blk: 0.3, fg_pct: 0.437, fg3_pct: 0.355, ft_pct: 0.856, turnover: 3.0 },
+  31: { player_id: 31, pts: 25.6, reb: 5.2, ast: 5.2, min: "35.3", gp: 58, stl: 1.3, blk: 0.5, fg_pct: 0.497, fg3_pct: 0.413, ft_pct: 0.905, turnover: 2.5 },
+  32: { player_id: 32, pts: 19.4, reb: 13.7, ast: 7.3, min: "35.4", gp: 82, stl: 1.0, blk: 0.5, fg_pct: 0.594, fg3_pct: 0.354, ft_pct: 0.728, turnover: 3.5 },
+  33: { player_id: 33, pts: 24.0, reb: 4.3, ast: 5.3, min: "36.2", gp: 79, stl: 1.1, blk: 0.4, fg_pct: 0.480, fg3_pct: 0.335, ft_pct: 0.852, turnover: 2.1 },
+  34: { player_id: 34, pts: 21.3, reb: 6.4, ast: 3.8, min: "33.7", gp: 71, stl: 0.7, blk: 0.5, fg_pct: 0.490, fg3_pct: 0.360, ft_pct: 0.767, turnover: 2.3 },
+  35: { player_id: 35, pts: 23.2, reb: 8.2, ast: 2.0, min: "33.0", gp: 55, stl: 0.8, blk: 0.7, fg_pct: 0.480, fg3_pct: 0.394, ft_pct: 0.872, turnover: 2.0 },
+  36: { player_id: 36, pts: 22.5, reb: 5.5, ast: 2.3, min: "32.2", gp: 66, stl: 1.0, blk: 1.6, fg_pct: 0.452, fg3_pct: 0.339, ft_pct: 0.820, turnover: 2.3 },
+  37: { player_id: 37, pts: 19.9, reb: 7.2, ast: 5.3, min: "35.1", gp: 60, stl: 1.3, blk: 1.5, fg_pct: 0.476, fg3_pct: 0.284, ft_pct: 0.772, turnover: 2.7 },
+  38: { player_id: 38, pts: 15.7, reb: 9.4, ast: 3.2, min: "32.5", gp: 82, stl: 0.8, blk: 1.3, fg_pct: 0.580, fg3_pct: 0.371, ft_pct: 0.705, turnover: 2.0 },
+  39: { player_id: 39, pts: 22.7, reb: 4.5, ast: 7.5, min: "34.8", gp: 62, stl: 1.0, blk: 0.3, fg_pct: 0.441, fg3_pct: 0.354, ft_pct: 0.828, turnover: 3.5 },
+  40: { player_id: 40, pts: 19.1, reb: 4.5, ast: 5.1, min: "31.5", gp: 68, stl: 1.4, blk: 0.6, fg_pct: 0.522, fg3_pct: 0.396, ft_pct: 0.780, turnover: 2.0 },
+  41: { player_id: 41, pts: 19.7, reb: 5.3, ast: 3.7, min: "33.3", gp: 72, stl: 1.1, blk: 0.4, fg_pct: 0.480, fg3_pct: 0.362, ft_pct: 0.839, turnover: 2.4 },
+  42: { player_id: 42, pts: 19.6, reb: 4.5, ast: 3.6, min: "33.8", gp: 82, stl: 1.1, blk: 0.9, fg_pct: 0.438, fg3_pct: 0.378, ft_pct: 0.877, turnover: 1.5 },
+  43: { player_id: 43, pts: 24.7, reb: 5.1, ast: 5.7, min: "34.3", gp: 45, stl: 0.7, blk: 0.5, fg_pct: 0.490, fg3_pct: 0.372, ft_pct: 0.820, turnover: 2.6 },
+  44: { player_id: 44, pts: 21.1, reb: 9.3, ast: 5.0, min: "32.8", gp: 63, stl: 1.2, blk: 0.9, fg_pct: 0.530, fg3_pct: 0.298, ft_pct: 0.718, turnover: 3.2 },
+  45: { player_id: 45, pts: 15.2, reb: 4.2, ast: 5.2, min: "32.8", gp: 73, stl: 1.0, blk: 1.2, fg_pct: 0.461, fg3_pct: 0.398, ft_pct: 0.866, turnover: 1.8 },
+  46: { player_id: 46, pts: 18.0, reb: 2.7, ast: 6.5, min: "32.4", gp: 57, stl: 1.3, blk: 0.1, fg_pct: 0.444, fg3_pct: 0.376, ft_pct: 0.843, turnover: 2.6 },
+  47: { player_id: 47, pts: 19.6, reb: 5.2, ast: 3.5, min: "33.2", gp: 82, stl: 0.9, blk: 0.3, fg_pct: 0.424, fg3_pct: 0.332, ft_pct: 0.795, turnover: 2.3 },
+  48: { player_id: 48, pts: 20.1, reb: 7.2, ast: 2.0, min: "29.6", gp: 57, stl: 0.7, blk: 1.9, fg_pct: 0.519, fg3_pct: 0.375, ft_pct: 0.858, turnover: 1.5 },
+};
+
+export function getPlayersForTeam(teamAbbr: string): NBAPlayer[] {
+  return NBA_PLAYERS.filter(p => p.team.abbreviation === teamAbbr);
+}
+
+export function searchPlayers(query: string): NBAPlayer[] {
+  const q = query.toLowerCase();
+  return NBA_PLAYERS.filter(p =>
+    `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
+    p.team.full_name.toLowerCase().includes(q) ||
+    p.team.abbreviation.toLowerCase().includes(q)
+  );
+}
+
+export function filterByPosition(players: NBAPlayer[], position: string): NBAPlayer[] {
+  if (position === 'ALL') return players;
+  return players.filter(p => p.position.includes(position.charAt(0)));
+}
