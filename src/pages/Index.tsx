@@ -256,7 +256,7 @@ const Index = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <TeamGrid onPlayerClick={handlePlayerClick} favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} />
+              <TeamGrid onPlayerClick={handlePlayerClick} favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} teamRecords={teamRecords} />
             </motion.div>
           ) : (
             <motion.div
@@ -266,7 +266,7 @@ const Index = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <StandingsView favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} />
+              <StandingsView favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} teamRecords={teamRecords} />
             </motion.div>
           )}
         </AnimatePresence>
