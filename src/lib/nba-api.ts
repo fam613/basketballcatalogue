@@ -1,11 +1,27 @@
-import { supabase } from '@/integrations/supabase/client'
 import { NBAPlayer, NBATeam, PlayerStats } from './types'
 import { NBA_PLAYERS, NBA_TEAMS, PLAYER_STATS } from './nba-data'
 
 const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID
 
-async function callNbaApi(endpoint: string, params: Record<string, string> = {}) {
-  const searchParams = new URLSearchParams({ endpoint, ...params })
+type QueryValue = string | number | boolean | Array<string | number | boolean>
+
+function createNbaApiUrl(endpoint: string, params: Record<string, QueryValue> = {}) {
+  const searchParams = new URLSearchParams({ endpoint })
+
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) {
+      value.forEach((item) => searchParams.append(`${key}[]`, String(item)))
+      continue
+    }
+
+    searchParams.append(key, String(value))
+  }
+
+  return `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/nba-api?${searchParams}`
+}
+
+async function callNbaApi(endpoint: string, params: Record<string, QueryValue> = {}) {
+  const url = createNbaApiUrl(endpoint, params)
   const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/nba-api?${searchParams}`
   
   const response = await fetch(url, {
@@ -82,6 +98,35 @@ function mapApiStats(apiStats: any): PlayerStats {
   }
 }
 
+function average(values: number[]) {
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0
+}
+
+function formatMinutes(values: number[]) {
+  return average(values).toFixed(1)
+}
+
+function mapAggregatedStats(playerId: number, statLines: any[]): PlayerStats {
+  const minutes = statLines
+    .map((line) => Number.parseFloat(String(line.min ?? '0')))
+    .filter((value) => Number.isFinite(value))
+
+  return {
+    player_id: playerId,
+    pts: average(statLines.map((line) => Number(line.pts ?? 0))),
+    reb: average(statLines.map((line) => Number(line.reb ?? 0))),
+    ast: average(statLines.map((line) => Number(line.ast ?? 0))),
+    min: formatMinutes(minutes),
+    gp: statLines.length,
+    stl: average(statLines.map((line) => Number(line.stl ?? 0))),
+    blk: average(statLines.map((line) => Number(line.blk ?? 0))),
+    fg_pct: average(statLines.map((line) => Number(line.fg_pct ?? 0))),
+    fg3_pct: average(statLines.map((line) => Number(line.fg3_pct ?? 0))),
+    ft_pct: average(statLines.map((line) => Number(line.ft_pct ?? 0))),
+    turnover: average(statLines.map((line) => Number(line.turnover ?? 0))),
+  }
+}
+
 export async function fetchPlayers(): Promise<NBAPlayer[]> {
   try {
     // Fetch first few pages of players (API returns 25 per page by default)
@@ -120,34 +165,32 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
     const season = new Date().getMonth() >= 9 ? currentYear : currentYear - 1
     
     const statsMap: Record<number, PlayerStats> = {}
-    
-    // balldontlie v1: season_averages takes player_ids[] param
-    // Batch in groups of 25
+
     for (let i = 0; i < playerIds.length; i += 25) {
       const batch = playerIds.slice(i, i + 25)
-      const params: Record<string, string> = {
-        season: String(season),
-      }
-      // Add each player_id as separate param
-      const searchParams = new URLSearchParams({ endpoint: 'season_averages', ...params })
-      batch.forEach(id => searchParams.append('player_ids[]', String(id)))
-      
-      const url = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/nba-api?${searchParams}`
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+      const data = await callNbaApi('stats', {
+        seasons: [season],
+        player_ids: batch,
+        per_page: 100,
+        postseason: false,
       })
-      
-      if (!response.ok) continue
-      const data = await response.json()
-      
-      if (data.data && Array.isArray(data.data)) {
-        data.data.forEach((s: any) => {
-          statsMap[s.player_id] = mapApiStats(s)
-        })
-      }
+
+      if (!data.data || !Array.isArray(data.data)) continue
+
+      const groupedStats = new Map<number, any[]>()
+
+      data.data.forEach((line: any) => {
+        const playerId = line.player?.id
+        if (!playerId) return
+
+        const existing = groupedStats.get(playerId) ?? []
+        existing.push(line)
+        groupedStats.set(playerId, existing)
+      })
+
+      groupedStats.forEach((statLines, playerId) => {
+        statsMap[playerId] = mapAggregatedStats(playerId, statLines)
+      })
     }
     
     return Object.keys(statsMap).length > 0 ? statsMap : PLAYER_STATS
