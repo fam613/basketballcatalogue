@@ -229,6 +229,23 @@ const Index = () => {
                   {label}
                 </button>
               ))}
+
+              <div className="ml-auto flex items-center gap-1.5">
+                <ArrowDownWideNarrow className="h-3 w-3 text-muted-foreground" />
+                {SORT_OPTIONS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setSortBy(key)}
+                    className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                      sortBy === key
+                        ? 'bg-secondary text-secondary-foreground'
+                        : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
