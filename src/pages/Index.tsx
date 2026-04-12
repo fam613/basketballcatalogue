@@ -6,7 +6,7 @@ import { PlayerDetailModal } from '@/components/PlayerDetailModal';
 import { PlayerCompareModal } from '@/components/PlayerCompareModal';
 import { TeamGrid } from '@/components/TeamGrid';
 import { StandingsView } from '@/components/StandingsView';
-import { usePlayersQuery, usePlayerStatsQuery } from '@/hooks/use-nba-data';
+import { usePlayersQuery, usePlayerStatsQuery, useTeamRecordsQuery } from '@/hooks/use-nba-data';
 import { useFavorites } from '@/hooks/use-favorites';
 import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,8 +32,9 @@ const Index = () => {
   const { data: players = [], isFetching: playersFetching } = usePlayersQuery();
   const playerIds = useMemo(() => players.map(p => p.id), [players]);
   const { data: statsMap = {}, isFetching: statsFetching } = usePlayerStatsQuery(playerIds);
+  const { data: teamRecords = {}, isFetching: recordsFetching } = useTeamRecordsQuery();
 
-  const isFetching = playersFetching || statsFetching;
+  const isFetching = playersFetching || statsFetching || recordsFetching;
 
   const filteredPlayers = useMemo(() => {
     let result = searchQuery
