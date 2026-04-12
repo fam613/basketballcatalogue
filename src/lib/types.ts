@@ -44,5 +44,5 @@ export interface PlayerStats {
   turnover: number;
 }
 
-export type ViewMode = 'grid' | 'teams';
+export type ViewMode = 'grid' | 'teams' | 'standings';
 export type PositionFilter = 'ALL' | 'PG' | 'SG' | 'SF' | 'PF' | 'C' | 'G' | 'F';
