@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
+import { PlayerAvatar } from './PlayerAvatar';
 
 interface PlayerCardProps {
   player: NBAPlayer;
@@ -18,7 +19,6 @@ const StatBlock = ({ label, value }: { label: string; value: string | number }) 
 );
 
 export function PlayerCard({ player, stats, onClick, index }: PlayerCardProps) {
-  const initials = `${player.first_name[0]}${player.last_name[0]}`;
 
   return (
     <motion.div
@@ -38,12 +38,7 @@ export function PlayerCard({ player, stats, onClick, index }: PlayerCardProps) {
 
         <div className="p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shrink-0"
-              style={{ backgroundColor: player.team.color }}
-            >
-              {initials}
-            </div>
+            <PlayerAvatar player={player} size="md" rounded="full" />
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {player.team.abbreviation} · #{player.jersey_number}

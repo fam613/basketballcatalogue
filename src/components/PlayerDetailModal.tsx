@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
+import { PlayerAvatar } from './PlayerAvatar';
 import { motion } from 'framer-motion';
 
 interface PlayerDetailModalProps {
@@ -28,7 +29,6 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerDetailModalProps) {
   if (!player) return null;
-  const initials = `${player.first_name[0]}${player.last_name[0]}`;
 
   const draftInfo = player.draft_year
     ? `${player.draft_year} · Round ${player.draft_round}, Pick #${player.draft_number}`
@@ -47,12 +47,7 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
           />
           <DialogHeader>
             <div className="flex items-center gap-4">
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shrink-0"
-                style={{ backgroundColor: player.team.color }}
-              >
-                {initials}
-              </div>
+              <PlayerAvatar player={player} size="lg" rounded="2xl" />
               <div>
                 <DialogDescription className="text-xs font-semibold uppercase tracking-wider mb-0.5">
                   {player.team.full_name} · #{player.jersey_number}
