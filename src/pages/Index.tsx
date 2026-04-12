@@ -140,7 +140,7 @@ const Index = () => {
                   NBA Cards
                 </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  {players.length} Active Players · Stats are sample data
+                  {players.length} Active Players · Live 2025-26 Stats
                   {isFetching && (
                     <RefreshCw className="h-3 w-3 animate-spin text-primary" />
                   )}
