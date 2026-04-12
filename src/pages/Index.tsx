@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Search, LayoutGrid, Building2 } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerDetailModal } from '@/components/PlayerDetailModal';
 import { TeamGrid } from '@/components/TeamGrid';
-import { NBA_PLAYERS, searchPlayers, filterByPosition } from '@/lib/nba-data';
+import { usePlayersQuery, usePlayerStatsQuery } from '@/hooks/use-nba-data';
 import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
+import { searchPlayers, filterByPosition } from '@/lib/nba-data';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const POSITIONS: PositionFilter[] = ['ALL', 'G', 'F', 'C'];
@@ -18,11 +18,25 @@ const Index = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<NBAPlayer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const { data: players = [], isFetching: playersFetching } = usePlayersQuery();
+  const playerIds = useMemo(() => players.map(p => p.id), [players]);
+  const { data: statsMap = {}, isFetching: statsFetching } = usePlayerStatsQuery(playerIds);
+
+  const isFetching = playersFetching || statsFetching;
+
   const filteredPlayers = useMemo(() => {
-    let players = searchQuery ? searchPlayers(searchQuery) : [...NBA_PLAYERS];
-    players = filterByPosition(players, positionFilter);
-    return players;
-  }, [searchQuery, positionFilter]);
+    let result = searchQuery
+      ? players.filter(p =>
+          `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.team.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.team.abbreviation.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [...players];
+    if (positionFilter !== 'ALL') {
+      result = result.filter(p => p.position.includes(positionFilter.charAt(0)));
+    }
+    return result;
+  }, [players, searchQuery, positionFilter]);
 
   const handlePlayerClick = (player: NBAPlayer) => {
     setSelectedPlayer(player);
@@ -43,12 +57,16 @@ const Index = () => {
                 <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   NBA Cards
                 </h1>
-                <p className="text-xs text-muted-foreground">{NBA_PLAYERS.length} Active Players</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  {players.length} Active Players
+                  {isFetching && (
+                    <RefreshCw className="h-3 w-3 animate-spin text-primary" />
+                  )}
+                </p>
               </div>
             </div>
 
             <div className="flex-1 flex items-center gap-3 sm:justify-end">
-              {/* Search */}
               {viewMode === 'grid' && (
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -61,7 +79,6 @@ const Index = () => {
                 </div>
               )}
 
-              {/* View toggle */}
               <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
                 <button
                   onClick={() => setViewMode('grid')}
@@ -83,7 +100,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Position filters */}
           {viewMode === 'grid' && (
             <div className="flex gap-2 mt-3">
               {POSITIONS.map((pos) => (
@@ -118,7 +134,7 @@ const Index = () => {
               {filteredPlayers.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredPlayers.map((player, i) => (
-                    <PlayerCard key={player.id} player={player} onClick={handlePlayerClick} index={i} />
+                    <PlayerCard key={player.id} player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} />
                   ))}
                 </div>
               ) : (
@@ -142,9 +158,9 @@ const Index = () => {
         </AnimatePresence>
       </main>
 
-      {/* Player detail modal */}
       <PlayerDetailModal
         player={selectedPlayer}
+        stats={selectedPlayer ? statsMap[selectedPlayer.id] : undefined}
         open={modalOpen}
         onOpenChange={setModalOpen}
       />

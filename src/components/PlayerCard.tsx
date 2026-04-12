@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
-import { PLAYER_STATS } from '@/lib/nba-data';
 
 interface PlayerCardProps {
   player: NBAPlayer;
+  stats?: PlayerStats;
   onClick: (player: NBAPlayer) => void;
   index: number;
 }
@@ -17,8 +17,7 @@ const StatBlock = ({ label, value }: { label: string; value: string | number }) 
   </div>
 );
 
-export function PlayerCard({ player, onClick, index }: PlayerCardProps) {
-  const stats: PlayerStats | undefined = PLAYER_STATS[player.id];
+export function PlayerCard({ player, stats, onClick, index }: PlayerCardProps) {
   const initials = `${player.first_name[0]}${player.last_name[0]}`;
 
   return (
@@ -32,14 +31,12 @@ export function PlayerCard({ player, onClick, index }: PlayerCardProps) {
       className="cursor-pointer group"
     >
       <div className="rounded-2xl bg-card border border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-        {/* Top color bar with team color */}
         <div
           className="h-2 w-full"
           style={{ background: `linear-gradient(90deg, ${player.team.color}, ${player.team.secondaryColor})` }}
         />
 
         <div className="p-5">
-          {/* Player avatar + name */}
           <div className="flex items-center gap-3 mb-4">
             <div
               className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold shrink-0"
@@ -58,7 +55,6 @@ export function PlayerCard({ player, onClick, index }: PlayerCardProps) {
             </div>
           </div>
 
-          {/* Stats row */}
           {stats && (
             <div className="grid grid-cols-4 gap-1 pt-3 border-t border-border/50">
               <StatBlock label="PPG" value={stats.pts.toFixed(1)} />
