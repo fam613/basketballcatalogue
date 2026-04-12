@@ -173,6 +173,14 @@ const Index = () => {
                   <Trophy className="h-4 w-4" /> Standings
                 </button>
               </div>
+
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                aria-label="Toggle dark mode"
+              >
+                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
