@@ -7,6 +7,7 @@ interface PlayerCardProps {
   stats?: PlayerStats;
   onClick: (player: NBAPlayer) => void;
   index: number;
+  teamRecord?: { wins: number; losses: number };
 }
 
 const StatBlock = ({ label, value }: { label: string; value: string | number }) => (
@@ -18,7 +19,7 @@ const StatBlock = ({ label, value }: { label: string; value: string | number }) 
   </div>
 );
 
-export function PlayerCard({ player, stats, onClick, index }: PlayerCardProps) {
+export function PlayerCard({ player, stats, onClick, index, teamRecord }: PlayerCardProps) {
 
   return (
     <motion.div
@@ -42,6 +43,7 @@ export function PlayerCard({ player, stats, onClick, index }: PlayerCardProps) {
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {player.team.abbreviation} · #{player.jersey_number}
+                {teamRecord && <span className="normal-case"> · {teamRecord.wins}W-{teamRecord.losses}L</span>}
               </div>
               <div className="font-bold text-lg leading-tight truncate" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                 {player.first_name} {player.last_name}
