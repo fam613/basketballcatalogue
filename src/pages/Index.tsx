@@ -131,7 +131,7 @@ const Index = () => {
                 </div>
               )}
 
-              {viewMode === 'grid' && (
+              {(viewMode === 'grid' || viewMode === 'teams') && (
                 <button
                   onClick={() => compareMode ? exitCompare() : setCompareMode(true)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors shrink-0 ${
@@ -155,7 +155,7 @@ const Index = () => {
                   <LayoutGrid className="h-4 w-4" /> Cards
                 </button>
                 <button
-                  onClick={() => { setViewMode('teams'); exitCompare(); }}
+                  onClick={() => { setViewMode('teams'); }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
                     viewMode === 'teams' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'
                   }`}
@@ -256,7 +256,7 @@ const Index = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <TeamGrid onPlayerClick={handlePlayerClick} favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} teamRecords={teamRecords} />
+              <TeamGrid onPlayerClick={handlePlayerClick} favTeamIds={favTeamIds} onToggleFavTeam={toggleFavTeam} teamRecords={teamRecords} compareMode={compareMode} compareSlots={compareSlots} />
             </motion.div>
           ) : (
             <motion.div
