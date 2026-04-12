@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 interface StandingsViewProps {
   favTeamIds?: Set<number>;
   onToggleFavTeam?: (id: number) => void;
+  teamRecords?: Record<number, { wins: number; losses: number }>;
 }
 
 function pct(w: number, l: number) {
@@ -94,9 +95,14 @@ function ConferenceTable({ title, teams, favTeamIds, onToggleFavTeam }: { title:
   );
 }
 
-export function StandingsView({ favTeamIds, onToggleFavTeam }: StandingsViewProps) {
-  const east = NBA_TEAMS.filter(t => t.conference === 'East').sort((a, b) => b.wins - a.wins || a.losses - b.losses);
-  const west = NBA_TEAMS.filter(t => t.conference === 'West').sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+export function StandingsView({ favTeamIds, onToggleFavTeam, teamRecords = {} }: StandingsViewProps) {
+  const teamsWithRecords = NBA_TEAMS.map(t => {
+    const rec = teamRecords[t.id];
+    return rec ? { ...t, wins: rec.wins, losses: rec.losses } : t;
+  });
+
+  const east = teamsWithRecords.filter(t => t.conference === 'East').sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+  const west = teamsWithRecords.filter(t => t.conference === 'West').sort((a, b) => b.wins - a.wins || a.losses - b.losses);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

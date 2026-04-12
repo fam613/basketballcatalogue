@@ -10,6 +10,7 @@ interface TeamGridProps {
   onPlayerClick: (player: NBAPlayer) => void;
   favTeamIds?: Set<number>;
   onToggleFavTeam?: (id: number) => void;
+  teamRecords?: Record<number, { wins: number; losses: number }>;
 }
 
 function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClick: () => void; isFav?: boolean; onToggleFav?: () => void }) {
