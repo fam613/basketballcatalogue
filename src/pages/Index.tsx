@@ -83,7 +83,7 @@ const Index = () => {
     }
 
     return result;
-  }, [players, searchQuery, gridFilter, favPlayerIds, favTeamIds]);
+  }, [players, searchQuery, gridFilter, favPlayerIds, favTeamIds, sortBy, statsMap]);
 
   const handlePlayerClick = (player: NBAPlayer) => {
     if (compareMode) {
