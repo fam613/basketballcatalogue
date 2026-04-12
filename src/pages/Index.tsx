@@ -29,6 +29,7 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [gridFilter, setGridFilter] = useState<GridFilter>('ALL');
+  const [sortBy, setSortBy] = useState<SortOption>('default');
   const [selectedPlayer, setSelectedPlayer] = useState<NBAPlayer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -63,6 +64,24 @@ const Index = () => {
     } else if (gridFilter !== 'ALL') {
       result = result.filter(p => p.position.includes(gridFilter.charAt(0)));
     }
+
+    if (sortBy !== 'default') {
+      result.sort((a, b) => {
+        const sa = statsMap[a.id];
+        const sb = statsMap[b.id];
+        if (!sa && !sb) return 0;
+        if (!sa) return 1;
+        if (!sb) return -1;
+        switch (sortBy) {
+          case 'ppg': return sb.pts - sa.pts;
+          case 'rpg': return sb.reb - sa.reb;
+          case 'apg': return sb.ast - sa.ast;
+          case 'min': return parseFloat(sb.min) - parseFloat(sa.min);
+          default: return 0;
+        }
+      });
+    }
+
     return result;
   }, [players, searchQuery, gridFilter, favPlayerIds, favTeamIds]);
 
