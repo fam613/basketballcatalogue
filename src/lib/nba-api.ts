@@ -34,7 +34,14 @@ async function callNbaApi(endpoint: string, params: Record<string, QueryValue> =
     throw new Error(`API error: ${response.status}`)
   }
   
-  return response.json()
+  const data = await response.json()
+  
+  if (data?.fallback) {
+    console.warn('API rate-limited or unavailable, using fallback data')
+    throw new Error('FALLBACK')
+  }
+  
+  return data
 }
 
 // Team color mapping for display

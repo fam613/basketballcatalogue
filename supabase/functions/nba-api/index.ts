@@ -54,8 +54,12 @@ Deno.serve(async (req) => {
     const text = await response.text()
     
     if (!response.ok) {
-      return new Response(JSON.stringify({ error: `API returned ${response.status}: ${text}` }), {
-        status: response.status,
+      const isFallbackable = response.status === 429 || response.status >= 500
+      return new Response(JSON.stringify({
+        error: isFallbackable ? 'SERVICE_UNAVAILABLE' : `API returned ${response.status}: ${text}`,
+        fallback: isFallbackable,
+      }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
