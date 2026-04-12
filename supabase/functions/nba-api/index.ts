@@ -11,10 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const rawKey = Deno.env.get('BALLDONTLIE_API_KEY')
-    console.log('Raw key length:', rawKey?.length, 'First 8 chars:', rawKey?.substring(0, 8))
-    const apiKey = rawKey?.trim().replace(/^['\"]|['\"]$/g, '')
-    console.log('Clean key length:', apiKey?.length, 'First 8 chars:', apiKey?.substring(0, 8))
+    const apiKey = Deno.env.get('BALLDONTLIE_API_KEY')?.trim().replace(/^['\"]|['\"]$/g, '')
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'API key not configured' }), {
         status: 500,
@@ -33,7 +30,7 @@ Deno.serve(async (req) => {
     }
 
     // Allowlist of valid endpoints
-    const validEndpoints = ['players', 'teams', 'season_averages', 'stats']
+    const validEndpoints = ['players', 'teams', 'season_averages', 'stats', 'games']
     const basePath = endpoint.split('?')[0].split('/')[0]
     if (!validEndpoints.includes(basePath)) {
       return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
