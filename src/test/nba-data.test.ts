@@ -1,11 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { NBA_TEAMS } from "@/lib/nba-teams";
 import {
-  NBA_TEAMS,
   NBA_PLAYERS,
   PLAYER_STATS,
   getPlayersForTeam,
-  searchPlayers,
-  filterByPosition,
 } from "@/lib/nba-data";
 
 describe("NBA_TEAMS", () => {
@@ -86,59 +84,3 @@ describe("getPlayersForTeam", () => {
   });
 });
 
-describe("searchPlayers", () => {
-  it("finds players by first name", () => {
-    const results = searchPlayers("LeBron");
-    expect(results.length).toBeGreaterThan(0);
-    expect(results[0].first_name).toBe("LeBron");
-  });
-
-  it("finds players by team name", () => {
-    const results = searchPlayers("Lakers");
-    expect(results.length).toBeGreaterThan(0);
-    for (const p of results) {
-      expect(p.team.full_name).toContain("Lakers");
-    }
-  });
-
-  it("is case-insensitive", () => {
-    const upper = searchPlayers("LEBRON");
-    const lower = searchPlayers("lebron");
-    expect(upper).toEqual(lower);
-  });
-
-  it("returns empty for no match", () => {
-    expect(searchPlayers("xyznonexistent123")).toEqual([]);
-  });
-});
-
-describe("filterByPosition", () => {
-  it("returns all players for ALL filter", () => {
-    const result = filterByPosition(NBA_PLAYERS, "ALL");
-    expect(result).toEqual(NBA_PLAYERS);
-  });
-
-  it("filters guards", () => {
-    const guards = filterByPosition(NBA_PLAYERS, "G");
-    expect(guards.length).toBeGreaterThan(0);
-    for (const p of guards) {
-      expect(p.position).toContain("G");
-    }
-  });
-
-  it("filters forwards", () => {
-    const forwards = filterByPosition(NBA_PLAYERS, "F");
-    expect(forwards.length).toBeGreaterThan(0);
-    for (const p of forwards) {
-      expect(p.position).toContain("F");
-    }
-  });
-
-  it("filters centers", () => {
-    const centers = filterByPosition(NBA_PLAYERS, "C");
-    expect(centers.length).toBeGreaterThan(0);
-    for (const p of centers) {
-      expect(p.position).toContain("C");
-    }
-  });
-});

@@ -23,13 +23,17 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
 
   return (
     <motion.div
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.03 }}
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick(player)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(player); } }}
       className="cursor-pointer group"
+      aria-label={`${player.first_name} ${player.last_name}, ${player.position}, ${player.team.abbreviation}${stats ? `, ${stats.pts.toFixed(1)} PPG` : ''}`}
     >
       <div className="rounded-2xl bg-card border border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden">
         <div

@@ -1,4 +1,4 @@
-import { NBA_TEAMS } from '@/lib/nba-data';
+import { NBA_TEAMS } from '@/lib/nba-teams';
 import { NBATeam } from '@/lib/types';
 import { Star } from 'lucide-react';
 import { motion } from 'framer-motion';

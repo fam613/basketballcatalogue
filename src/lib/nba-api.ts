@@ -1,7 +1,12 @@
 import { NBAPlayer, NBATeam, PlayerStats } from './types'
+import { NBA_TEAMS } from './nba-teams'
 
-// Lazy-load fallback data only when needed
+// Lazy-load heavy fallback data (players + stats) only when the API is unavailable
 const loadFallbackData = () => import('./nba-data')
+
+// Track whether the app is using fallback data instead of live API data
+let _usingFallback = false
+export function isUsingFallbackData() { return _usingFallback }
 
 interface ApiTeamResponse {
   id: number;
@@ -100,22 +105,14 @@ async function callNbaApi(endpoint: string, params: Record<string, QueryValue> =
   return data
 }
 
-// Team color mapping for display — loaded lazily and cached
-let teamColorsCache: Record<string, { color: string; secondaryColor: string }> | null = null
-
-async function getTeamColors(): Promise<Record<string, { color: string; secondaryColor: string }>> {
-  if (!teamColorsCache) {
-    const { NBA_TEAMS } = await loadFallbackData()
-    teamColorsCache = {}
-    for (const t of NBA_TEAMS) {
-      teamColorsCache[t.abbreviation] = { color: t.color, secondaryColor: t.secondaryColor }
-    }
-  }
-  return teamColorsCache
+// Team color mapping for display — built from the small static teams list
+const TEAM_COLORS: Record<string, { color: string; secondaryColor: string }> = {}
+for (const t of NBA_TEAMS) {
+  TEAM_COLORS[t.abbreviation] = { color: t.color, secondaryColor: t.secondaryColor }
 }
 
-function mapApiTeam(apiTeam: ApiTeamResponse, colors: Record<string, { color: string; secondaryColor: string }>): NBATeam {
-  const teamColors = colors[apiTeam.abbreviation] || { color: '#333', secondaryColor: '#666' }
+function mapApiTeam(apiTeam: ApiTeamResponse): NBATeam {
+  const teamColors = TEAM_COLORS[apiTeam.abbreviation] || { color: '#333', secondaryColor: '#666' }
   return {
     id: apiTeam.id,
     abbreviation: apiTeam.abbreviation,
@@ -131,8 +128,8 @@ function mapApiTeam(apiTeam: ApiTeamResponse, colors: Record<string, { color: st
   }
 }
 
-function mapApiPlayer(apiPlayer: ApiPlayerResponse, colors: Record<string, { color: string; secondaryColor: string }>): NBAPlayer {
-  const team = mapApiTeam(apiPlayer.team, colors)
+function mapApiPlayer(apiPlayer: ApiPlayerResponse): NBAPlayer {
+  const team = mapApiTeam(apiPlayer.team)
   return {
     id: apiPlayer.id,
     first_name: apiPlayer.first_name,
@@ -199,8 +196,6 @@ function mapAggregatedStats(playerId: number, statLines: ApiStatsResponse[]): Pl
 
 export async function fetchPlayers(): Promise<NBAPlayer[]> {
   try {
-    const colors = await getTeamColors()
-
     // Fetch first few pages of players (API returns 25 per page by default)
     const allPlayers: NBAPlayer[] = []
     let cursor: number | null = null
@@ -215,7 +210,7 @@ export async function fetchPlayers(): Promise<NBAPlayer[]> {
       if (data.data && Array.isArray(data.data)) {
         const mapped = data.data
           .filter((p) => p.team && p.position) // only active players with positions
-          .map((p) => mapApiPlayer(p, colors))
+          .map(mapApiPlayer)
         allPlayers.push(...mapped)
       }
 
@@ -224,9 +219,11 @@ export async function fetchPlayers(): Promise<NBAPlayer[]> {
     }
 
     if (allPlayers.length > 0) return allPlayers
+    _usingFallback = true
     const { NBA_PLAYERS } = await loadFallbackData()
     return NBA_PLAYERS
   } catch {
+    _usingFallback = true
     const { NBA_PLAYERS } = await loadFallbackData()
     return NBA_PLAYERS
   }
@@ -293,11 +290,10 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
 
 export async function fetchTeams(): Promise<NBATeam[]> {
   try {
-    const colors = await getTeamColors()
     const data = await callNbaApi('teams') as ApiPaginatedResponse<ApiTeamResponse>
 
     if (data.data && Array.isArray(data.data)) {
-      const teams = data.data.map((t) => mapApiTeam(t, colors))
+      const teams = data.data.map(mapApiTeam)
       if (teams.length > 0) return teams
     }
 

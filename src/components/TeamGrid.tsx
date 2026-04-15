@@ -1,12 +1,13 @@
 import { motion } from 'framer-motion';
 import { NBATeam, NBAPlayer } from '@/lib/types';
-import { NBA_TEAMS, getPlayersForTeam } from '@/lib/nba-data';
+import { NBA_TEAMS } from '@/lib/nba-teams';
 import { PlayerCard } from './PlayerCard';
 import { ArrowLeft, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
 interface TeamGridProps {
+  players: NBAPlayer[];
   onPlayerClick: (player: NBAPlayer) => void;
   favTeamIds?: Set<number>;
   onToggleFavTeam?: (id: number) => void;
@@ -15,15 +16,18 @@ interface TeamGridProps {
   compareSlots?: [NBAPlayer | null, NBAPlayer | null];
 }
 
-function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClick: () => void; isFav?: boolean; onToggleFav?: () => void }) {
-  const playerCount = getPlayersForTeam(team.abbreviation).length;
+function TeamTile({ team, playerCount, onClick, isFav, onToggleFav }: { team: NBATeam; playerCount: number; onClick: () => void; isFav?: boolean; onToggleFav?: () => void }) {
 
   return (
     <motion.div
+      role="button"
+      tabIndex={0}
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       className="cursor-pointer relative"
+      aria-label={`${team.full_name}, ${team.wins}W-${team.losses}L`}
     >
       <div className="rounded-2xl bg-card border border-border/60 shadow-sm hover:shadow-lg transition-shadow overflow-hidden">
         <div className="h-2 w-full" style={{ background: `linear-gradient(90deg, ${team.color}, ${team.secondaryColor})` }} />
@@ -39,8 +43,10 @@ function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClic
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleFav(); }}
                 className="p-1 rounded-full hover:bg-muted transition-colors"
+                aria-label={`${isFav ? 'Remove' : 'Add'} ${team.full_name} ${isFav ? 'from' : 'to'} favorites`}
+                aria-pressed={isFav}
               >
-                <Star className={`h-4 w-4 transition-colors ${isFav ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} />
+                <Star className={`h-4 w-4 transition-colors ${isFav ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -64,7 +70,7 @@ function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClic
   );
 }
 
-export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecords = {}, compareMode = false, compareSlots = [null, null] }: TeamGridProps) {
+export function TeamGrid({ players, onPlayerClick, favTeamIds, onToggleFavTeam, teamRecords = {}, compareMode = false, compareSlots = [null, null] }: TeamGridProps) {
   const [selectedTeam, setSelectedTeam] = useState<NBATeam | null>(null);
 
   const teamsWithRecords = NBA_TEAMS.map(t => {
@@ -73,12 +79,12 @@ export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecor
   });
 
   if (selectedTeam) {
-    const players = getPlayersForTeam(selectedTeam.abbreviation);
+    const teamPlayers = players.filter(p => p.team.abbreviation === selectedTeam.abbreviation);
     return (
       <div>
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedTeam(null)}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button variant="ghost" size="icon" onClick={() => setSelectedTeam(null)} aria-label="Back to all teams">
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </Button>
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold"
@@ -96,9 +102,9 @@ export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecor
           </div>
         </div>
 
-        {players.length > 0 ? (
+        {teamPlayers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {players.map((player, i) => {
+            {teamPlayers.map((player, i) => {
               const isSelected = compareMode && (compareSlots[0]?.id === player.id || compareSlots[1]?.id === player.id);
               return (
                 <div key={player.id} className={`relative ${isSelected ? 'ring-2 ring-primary rounded-2xl' : ''}`}>
@@ -119,6 +125,11 @@ export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecor
     );
   }
 
+  const playerCountByTeam: Record<string, number> = {};
+  for (const p of players) {
+    playerCountByTeam[p.team.abbreviation] = (playerCountByTeam[p.team.abbreviation] || 0) + 1;
+  }
+
   const eastTeams = teamsWithRecords.filter(t => t.conference === 'East').sort((a, b) => b.wins - a.wins);
   const westTeams = teamsWithRecords.filter(t => t.conference === 'West').sort((a, b) => b.wins - a.wins);
 
@@ -128,7 +139,7 @@ export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecor
         <h2 className="font-bold text-lg mb-4 text-muted-foreground uppercase tracking-widest text-xs">Eastern Conference</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {eastTeams.map(team => (
-            <TeamTile key={team.id} team={team} onClick={() => setSelectedTeam(team)} isFav={favTeamIds?.has(team.id)} onToggleFav={onToggleFavTeam ? () => onToggleFavTeam(team.id) : undefined} />
+            <TeamTile key={team.id} team={team} playerCount={playerCountByTeam[team.abbreviation] || 0} onClick={() => setSelectedTeam(team)} isFav={favTeamIds?.has(team.id)} onToggleFav={onToggleFavTeam ? () => onToggleFavTeam(team.id) : undefined} />
           ))}
         </div>
       </div>
@@ -136,7 +147,7 @@ export function TeamGrid({ onPlayerClick, favTeamIds, onToggleFavTeam, teamRecor
         <h2 className="font-bold text-lg mb-4 text-muted-foreground uppercase tracking-widest text-xs">Western Conference</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {westTeams.map(team => (
-            <TeamTile key={team.id} team={team} onClick={() => setSelectedTeam(team)} isFav={favTeamIds?.has(team.id)} onToggleFav={onToggleFavTeam ? () => onToggleFavTeam(team.id) : undefined} />
+            <TeamTile key={team.id} team={team} playerCount={playerCountByTeam[team.abbreviation] || 0} onClick={() => setSelectedTeam(team)} isFav={favTeamIds?.has(team.id)} onToggleFav={onToggleFavTeam ? () => onToggleFavTeam(team.id) : undefined} />
           ))}
         </div>
       </div>
