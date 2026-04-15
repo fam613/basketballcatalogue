@@ -40,7 +40,6 @@ interface ApiStatsResponse {
   reb: number;
   ast: number;
   min: string;
-  games_played?: number;
   stl: number;
   blk: number;
   fg_pct: number;
@@ -144,23 +143,6 @@ function mapApiPlayer(apiPlayer: ApiPlayerResponse): NBAPlayer {
     draft_number: apiPlayer.draft_number,
     team,
     career_teams: [team.abbreviation], // API doesn't provide history
-  }
-}
-
-function mapApiStats(apiStats: ApiStatsResponse): PlayerStats {
-  return {
-    player_id: apiStats.player_id,
-    pts: apiStats.pts ?? 0,
-    reb: apiStats.reb ?? 0,
-    ast: apiStats.ast ?? 0,
-    min: apiStats.min ?? '0',
-    gp: apiStats.games_played ?? 0,
-    stl: apiStats.stl ?? 0,
-    blk: apiStats.blk ?? 0,
-    fg_pct: apiStats.fg_pct ?? 0,
-    fg3_pct: apiStats.fg3_pct ?? 0,
-    ft_pct: apiStats.ft_pct ?? 0,
-    turnover: apiStats.turnover ?? 0,
   }
 }
 
@@ -278,9 +260,16 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
       }
     }
 
-    // Merge with fallback for any missing players
-    const { PLAYER_STATS } = await loadFallbackData()
-    return { ...PLAYER_STATS, ...results }
+    // Only load fallback data if some players are missing stats
+    const missingIds = playerIds.filter(id => !results[id])
+    if (missingIds.length > 0) {
+      const { PLAYER_STATS } = await loadFallbackData()
+      for (const id of missingIds) {
+        if (PLAYER_STATS[id]) results[id] = PLAYER_STATS[id]
+      }
+    }
+
+    return results
   } catch {
     const { PLAYER_STATS } = await loadFallbackData()
     return PLAYER_STATS

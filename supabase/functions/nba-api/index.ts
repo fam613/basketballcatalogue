@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     }
 
     // Allowlist of valid endpoints
-    const validEndpoints = ['players', 'teams', 'season_averages', 'stats', 'games']
+    const validEndpoints = ['players', 'stats', 'games']
     const basePath = endpoint.split('?')[0].split('/')[0]
     if (!validEndpoints.includes(basePath)) {
       return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
