@@ -1,5 +1,61 @@
 import { NBAPlayer, NBATeam, PlayerStats } from './types'
-import { NBA_PLAYERS, NBA_TEAMS, PLAYER_STATS } from './nba-data'
+
+// Lazy-load fallback data only when needed
+const loadFallbackData = () => import('./nba-data')
+
+interface ApiTeamResponse {
+  id: number;
+  abbreviation: string;
+  city: string;
+  conference: string;
+  division: string;
+  full_name: string;
+  name: string;
+}
+
+interface ApiPlayerResponse {
+  id: number;
+  first_name: string;
+  last_name: string;
+  position: string;
+  height: string;
+  weight: string;
+  jersey_number: string;
+  college: string;
+  country: string;
+  draft_year: number | null;
+  draft_round: number | null;
+  draft_number: number | null;
+  team: ApiTeamResponse;
+}
+
+interface ApiStatsResponse {
+  player_id: number;
+  pts: number;
+  reb: number;
+  ast: number;
+  min: string;
+  games_played?: number;
+  stl: number;
+  blk: number;
+  fg_pct: number;
+  fg3_pct: number;
+  ft_pct: number;
+  turnover: number;
+}
+
+interface ApiGameResponse {
+  status: string;
+  home_team: { id: number } | null;
+  visitor_team: { id: number } | null;
+  home_team_score: number;
+  visitor_team_score: number;
+}
+
+interface ApiPaginatedResponse<T> {
+  data: T[];
+  meta?: { next_cursor?: number };
+}
 
 const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID
 
@@ -44,14 +100,22 @@ async function callNbaApi(endpoint: string, params: Record<string, QueryValue> =
   return data
 }
 
-// Team color mapping for display
-const TEAM_COLORS: Record<string, { color: string; secondaryColor: string }> = {}
-NBA_TEAMS.forEach(t => {
-  TEAM_COLORS[t.abbreviation] = { color: t.color, secondaryColor: t.secondaryColor }
-})
+// Team color mapping for display — loaded lazily and cached
+let teamColorsCache: Record<string, { color: string; secondaryColor: string }> | null = null
 
-function mapApiTeam(apiTeam: any): NBATeam {
-  const colors = TEAM_COLORS[apiTeam.abbreviation] || { color: '#333', secondaryColor: '#666' }
+async function getTeamColors(): Promise<Record<string, { color: string; secondaryColor: string }>> {
+  if (!teamColorsCache) {
+    const { NBA_TEAMS } = await loadFallbackData()
+    teamColorsCache = {}
+    for (const t of NBA_TEAMS) {
+      teamColorsCache[t.abbreviation] = { color: t.color, secondaryColor: t.secondaryColor }
+    }
+  }
+  return teamColorsCache
+}
+
+function mapApiTeam(apiTeam: ApiTeamResponse, colors: Record<string, { color: string; secondaryColor: string }>): NBATeam {
+  const teamColors = colors[apiTeam.abbreviation] || { color: '#333', secondaryColor: '#666' }
   return {
     id: apiTeam.id,
     abbreviation: apiTeam.abbreviation,
@@ -62,13 +126,13 @@ function mapApiTeam(apiTeam: any): NBATeam {
     name: apiTeam.name,
     wins: 0, // API doesn't provide W-L on team object
     losses: 0,
-    color: colors.color,
-    secondaryColor: colors.secondaryColor,
+    color: teamColors.color,
+    secondaryColor: teamColors.secondaryColor,
   }
 }
 
-function mapApiPlayer(apiPlayer: any): NBAPlayer {
-  const team = mapApiTeam(apiPlayer.team)
+function mapApiPlayer(apiPlayer: ApiPlayerResponse, colors: Record<string, { color: string; secondaryColor: string }>): NBAPlayer {
+  const team = mapApiTeam(apiPlayer.team, colors)
   return {
     id: apiPlayer.id,
     first_name: apiPlayer.first_name,
@@ -87,7 +151,7 @@ function mapApiPlayer(apiPlayer: any): NBAPlayer {
   }
 }
 
-function mapApiStats(apiStats: any): PlayerStats {
+function mapApiStats(apiStats: ApiStatsResponse): PlayerStats {
   return {
     player_id: apiStats.player_id,
     pts: apiStats.pts ?? 0,
@@ -112,7 +176,7 @@ function formatMinutes(values: number[]) {
   return average(values).toFixed(1)
 }
 
-function mapAggregatedStats(playerId: number, statLines: any[]): PlayerStats {
+function mapAggregatedStats(playerId: number, statLines: ApiStatsResponse[]): PlayerStats {
   const minutes = statLines
     .map((line) => Number.parseFloat(String(line.min ?? '0')))
     .filter((value) => Number.isFinite(value))
@@ -135,31 +199,35 @@ function mapAggregatedStats(playerId: number, statLines: any[]): PlayerStats {
 
 export async function fetchPlayers(): Promise<NBAPlayer[]> {
   try {
+    const colors = await getTeamColors()
+
     // Fetch first few pages of players (API returns 25 per page by default)
     const allPlayers: NBAPlayer[] = []
     let cursor: number | null = null
     const maxPages = 4 // ~100 players
-    
+
     for (let page = 0; page < maxPages; page++) {
       const params: Record<string, QueryValue> = { per_page: 100 }
       if (cursor) params.cursor = String(cursor)
-      
-      const data = await callNbaApi('players', params)
-      
+
+      const data = await callNbaApi('players', params) as ApiPaginatedResponse<ApiPlayerResponse>
+
       if (data.data && Array.isArray(data.data)) {
         const mapped = data.data
-          .filter((p: any) => p.team && p.position) // only active players with positions
-          .map(mapApiPlayer)
+          .filter((p) => p.team && p.position) // only active players with positions
+          .map((p) => mapApiPlayer(p, colors))
         allPlayers.push(...mapped)
       }
-      
+
       if (!data.meta?.next_cursor) break
       cursor = data.meta.next_cursor
     }
-    
-    return allPlayers.length > 0 ? allPlayers : NBA_PLAYERS
-  } catch (error) {
-    console.warn('Failed to fetch players from API, using fallback data:', error)
+
+    if (allPlayers.length > 0) return allPlayers
+    const { NBA_PLAYERS } = await loadFallbackData()
+    return NBA_PLAYERS
+  } catch {
+    const { NBA_PLAYERS } = await loadFallbackData()
     return NBA_PLAYERS
   }
 }
@@ -171,43 +239,72 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
 
     const results: Record<number, PlayerStats> = {}
 
-    // season_averages takes one player_id at a time — batch in chunks
-    const chunkSize = 10
+    // Use the stats endpoint with player_ids[] to batch requests
+    // instead of one season_averages call per player
+    const chunkSize = 25
     for (let i = 0; i < playerIds.length; i += chunkSize) {
       const chunk = playerIds.slice(i, i + chunkSize)
-      const promises = chunk.map(async (pid) => {
-        try {
-          const data = await callNbaApi('season_averages', { player_id: pid, season })
-          if (data.data && data.data.length > 0) {
-            results[pid] = mapApiStats(data.data[0])
+      try {
+        // Accumulate all game stat lines for this chunk of players
+        const playerStatLines: Record<number, ApiStatsResponse[]> = {}
+        let cursor: number | null = null
+        const maxPages = 10
+
+        for (let page = 0; page < maxPages; page++) {
+          const params: Record<string, QueryValue> = {
+            per_page: 100,
+            seasons: [season],
+            'player_ids': chunk,
           }
-        } catch {
-          // skip individual failures
+          if (cursor) params.cursor = cursor
+
+          const data = await callNbaApi('stats', params) as ApiPaginatedResponse<ApiStatsResponse & { player: { id: number } }>
+
+          if (!data.data || !Array.isArray(data.data)) break
+
+          for (const line of data.data) {
+            const pid = line.player?.id ?? line.player_id
+            if (!pid) continue
+            if (!playerStatLines[pid]) playerStatLines[pid] = []
+            playerStatLines[pid].push(line)
+          }
+
+          if (!data.meta?.next_cursor) break
+          cursor = data.meta.next_cursor
         }
-      })
-      await Promise.all(promises)
+
+        // Aggregate per-game stats into season averages
+        for (const [pid, lines] of Object.entries(playerStatLines)) {
+          results[Number(pid)] = mapAggregatedStats(Number(pid), lines)
+        }
+      } catch {
+        // skip chunk failures, fallback data will fill gaps
+      }
     }
 
     // Merge with fallback for any missing players
+    const { PLAYER_STATS } = await loadFallbackData()
     return { ...PLAYER_STATS, ...results }
-  } catch (error) {
-    console.warn('Failed to fetch season averages, using fallback data:', error)
+  } catch {
+    const { PLAYER_STATS } = await loadFallbackData()
     return PLAYER_STATS
   }
 }
 
 export async function fetchTeams(): Promise<NBATeam[]> {
   try {
-    const data = await callNbaApi('teams')
-    
+    const colors = await getTeamColors()
+    const data = await callNbaApi('teams') as ApiPaginatedResponse<ApiTeamResponse>
+
     if (data.data && Array.isArray(data.data)) {
-      const teams = data.data.map(mapApiTeam)
-      return teams.length > 0 ? teams : NBA_TEAMS
+      const teams = data.data.map((t) => mapApiTeam(t, colors))
+      if (teams.length > 0) return teams
     }
-    
+
+    const { NBA_TEAMS } = await loadFallbackData()
     return NBA_TEAMS
-  } catch (error) {
-    console.warn('Failed to fetch teams, using fallback data:', error)
+  } catch {
+    const { NBA_TEAMS } = await loadFallbackData()
     return NBA_TEAMS
   }
 }
@@ -229,7 +326,7 @@ export async function fetchTeamRecords(): Promise<Record<number, { wins: number;
       }
       if (cursor) params.cursor = cursor
 
-      const data = await callNbaApi('games', params)
+      const data = await callNbaApi('games', params) as ApiPaginatedResponse<ApiGameResponse>
 
       if (!data.data || !Array.isArray(data.data)) break
 
@@ -257,8 +354,7 @@ export async function fetchTeamRecords(): Promise<Record<number, { wins: number;
     }
 
     return records
-  } catch (error) {
-    console.warn('Failed to fetch team records from games API:', error)
+  } catch {
     return {}
   }
 }
