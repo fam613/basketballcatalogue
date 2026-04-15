@@ -1,6 +1,6 @@
 import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, Heart, Star, Trophy, Sun, Moon, ArrowDownWideNarrow } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
+import { ViewMode, PositionFilter } from '@/lib/types';
 import { useTheme } from '@/hooks/use-theme';
 
 type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';

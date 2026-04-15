@@ -98,7 +98,6 @@ async function callNbaApi(endpoint: string, params: Record<string, QueryValue> =
   const data = await response.json()
   
   if (data?.fallback) {
-    console.warn('API rate-limited or unavailable, using fallback data')
     throw new Error('FALLBACK')
   }
   
@@ -285,23 +284,6 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
   } catch {
     const { PLAYER_STATS } = await loadFallbackData()
     return PLAYER_STATS
-  }
-}
-
-export async function fetchTeams(): Promise<NBATeam[]> {
-  try {
-    const data = await callNbaApi('teams') as ApiPaginatedResponse<ApiTeamResponse>
-
-    if (data.data && Array.isArray(data.data)) {
-      const teams = data.data.map(mapApiTeam)
-      if (teams.length > 0) return teams
-    }
-
-    const { NBA_TEAMS } = await loadFallbackData()
-    return NBA_TEAMS
-  } catch {
-    const { NBA_TEAMS } = await loadFallbackData()
-    return NBA_TEAMS
   }
 }
 
