@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get('BALLDONTLIE_API_KEY')?.trim().replace(/^['\"]|['\"]$/g, '')
+    const apiKey = Deno.env.get('BALLDONTLIE_API_KEY')?.trim()
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'API key not configured' }), {
         status: 500,
@@ -79,8 +79,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message, fallback: true }), {
-      status: 200,
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

@@ -50,13 +50,13 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
               <PlayerAvatar player={player} size="lg" rounded="2xl" />
               <div className="min-w-0">
                 <DialogDescription className="text-xs font-semibold uppercase tracking-wider mb-0.5 truncate">
-                  {player.team.full_name} · #{player.jersey_number}
+                  {player.team.full_name}{player.jersey_number ? ` · #${player.jersey_number}` : ''}
                 </DialogDescription>
                 <DialogTitle className="text-xl sm:text-2xl font-bold truncate" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   {player.first_name} {player.last_name}
                 </DialogTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  {player.position} · {player.height} · {player.weight} lbs
+                  {player.position} · {player.height}{player.weight ? ` · ${player.weight} lbs` : ''}
                 </p>
               </div>
             </div>
@@ -99,7 +99,7 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
             <InfoRow label="Draft" value={draftInfo} />
             {player.college && <InfoRow label="College" value={player.college} />}
             {player.country && <InfoRow label="Country" value={player.country} />}
-            {player.career_teams?.length > 0 && <InfoRow label="Career Teams" value={[...new Set(player.career_teams)].join(' → ')} />}
+            {player.career_teams && player.career_teams.length > 0 && <InfoRow label="Career Teams" value={[...new Set(player.career_teams)].join(' → ')} />}
           </motion.div>
         </div>
       </DialogContent>

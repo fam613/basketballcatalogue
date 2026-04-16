@@ -23,13 +23,17 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
 
   return (
     <motion.div
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.03 }}
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick(player)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(player); } }}
       className="cursor-pointer group"
+      aria-label={`${player.first_name} ${player.last_name}, ${player.position}, ${player.team.abbreviation}${stats ? `, ${stats.pts.toFixed(1)} PPG` : ''}`}
     >
       <div className="rounded-2xl bg-card border border-border/60 shadow-sm hover:shadow-xl transition-shadow duration-300 overflow-hidden">
         <div
@@ -42,13 +46,13 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
             <PlayerAvatar player={player} size="md" rounded="full" />
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {player.team.abbreviation} · #{player.jersey_number}
+                {player.team.abbreviation}{player.jersey_number ? ` · #${player.jersey_number}` : ''}
                 {teamRecord && <span className="normal-case"> · {teamRecord.wins}W-{teamRecord.losses}L</span>}
               </div>
               <div className="font-bold text-lg leading-tight truncate" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                 {player.first_name} {player.last_name}
               </div>
-              <div className="text-xs text-muted-foreground">{player.position} · {player.height}</div>
+              <div className="text-xs text-muted-foreground">{player.position}{player.height !== 'N/A' ? ` · ${player.height}` : ''}</div>
             </div>
           </div>
 

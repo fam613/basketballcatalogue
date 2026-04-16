@@ -18,13 +18,13 @@ export interface NBAPlayer {
   last_name: string;
   position: string;
   height: string;
-  weight: string;
-  jersey_number: string;
-  college?: string;
-  country?: string;
-  draft_year?: number | null;
-  draft_round?: number | null;
-  draft_number?: number | null;
+  weight: string | null;
+  jersey_number: string | null;
+  college: string;
+  country: string;
+  draft_year: number | null;
+  draft_round: number | null;
+  draft_number: number | null;
   team: NBATeam;
   career_teams?: string[];
 }
