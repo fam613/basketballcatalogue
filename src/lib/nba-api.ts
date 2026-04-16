@@ -152,27 +152,26 @@ function isActiveNbaPlayer(p: any): boolean {
 
 export async function fetchPlayers(): Promise<NBAPlayer[]> {
   try {
-    // Paginate through ALL players, filtering for active NBA roster players
+    // Use players/active endpoint (ALL-STAR tier) to fetch ONLY active NBA players
     const allPlayers: NBAPlayer[] = []
     let cursor: number | null = null
-    const maxPages = 20 // safety limit to prevent infinite loops
+    const maxPages = 8 // ~600 active players at 100/page
 
     for (let page = 0; page < maxPages; page++) {
       const params: Record<string, QueryValue> = { per_page: 100 }
       if (cursor) params.cursor = cursor
 
-      const data = await callNbaApi('players', params)
+      const data = await callNbaApi('players/active', params)
 
       if (data.data && Array.isArray(data.data)) {
-        const active = data.data.filter(isActiveNbaPlayer).map(mapApiPlayer)
-        allPlayers.push(...active)
+        allPlayers.push(...data.data.filter(isActiveNbaPlayer).map(mapApiPlayer))
       }
 
       if (!data.meta?.next_cursor) break
       cursor = data.meta.next_cursor
     }
 
-    // Deduplicate by player ID (API may return duplicates across pages)
+    // Deduplicate by player ID
     const seen = new Set<number>()
     const deduped = allPlayers.filter(p => {
       if (seen.has(p.id)) return false
@@ -180,11 +179,35 @@ export async function fetchPlayers(): Promise<NBAPlayer[]> {
       return true
     })
 
-    return deduped.length > 0 ? deduped : NBA_PLAYERS
+    if (deduped.length > 0) return deduped
+
+    // Fallback: fetch team-by-team if active endpoint fails
+    return await fetchPlayersWithTeamFilter()
   } catch (error) {
-    console.warn('Failed to fetch players from API, using fallback data:', error)
-    return NBA_PLAYERS
+    console.warn('Failed to fetch active players, trying fallback:', error)
+    try {
+      return await fetchPlayersWithTeamFilter()
+    } catch {
+      console.warn('Fallback also failed, using static data')
+      return NBA_PLAYERS
+    }
   }
+}
+
+async function fetchPlayersWithTeamFilter(): Promise<NBAPlayer[]> {
+  // Fetch players team-by-team to ensure only active roster players
+  const allPlayers: NBAPlayer[] = []
+  for (const teamId of NBA_TEAM_IDS) {
+    try {
+      const data = await callNbaApi('players', { per_page: 50, 'team_ids[]': teamId })
+      if (data.data && Array.isArray(data.data)) {
+        allPlayers.push(...data.data.filter(isActiveNbaPlayer).map(mapApiPlayer))
+      }
+    } catch (err) {
+      console.warn(`Failed to fetch team ${teamId}:`, err)
+    }
+  }
+  return allPlayers.length > 0 ? allPlayers : NBA_PLAYERS
 }
 
 export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<number, PlayerStats>> {

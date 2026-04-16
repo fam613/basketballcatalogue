@@ -29,10 +29,10 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Allowlist of valid endpoints
-    const validEndpoints = ['players', 'teams', 'season_averages', 'stats', 'games']
-    const basePath = endpoint.split('?')[0].split('/')[0]
-    if (!validEndpoints.includes(basePath)) {
+    // Allowlist of valid endpoints (includes players/active for ALL-STAR tier)
+    const validEndpoints = ['players', 'players/active', 'teams', 'season_averages', 'stats', 'games']
+    const cleanPath = endpoint.split('?')[0]
+    if (!validEndpoints.includes(cleanPath) && !validEndpoints.includes(cleanPath.split('/')[0])) {
       return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
