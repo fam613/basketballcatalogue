@@ -13,7 +13,8 @@ import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from 'sonner';
-import { isUsingFallbackData } from '@/lib/nba-api';
+import { isUsingFallbackData, getLastRefreshed } from '@/lib/nba-api';
+import { useQueryClient } from '@tanstack/react-query';
 
 type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';
 type SortOption = 'default' | 'ppg' | 'rpg' | 'apg' | 'min';
@@ -49,11 +50,19 @@ const Index = () => {
 
   const { favPlayerIds, favTeamIds, toggleFavPlayer, toggleFavTeam } = useFavorites();
   const { theme, toggleTheme } = useTheme();
+  const queryClient = useQueryClient();
 
   const { data: players = [], isFetching: playersFetching } = usePlayersQuery();
   const playerIds = useMemo(() => players.map(p => p.id), [players]);
   const { data: statsMap = {}, isFetching: statsFetching } = usePlayerStatsQuery(playerIds);
   const { data: teamRecords = {}, isFetching: recordsFetching } = useTeamRecordsQuery();
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['nba-players'] });
+    queryClient.invalidateQueries({ queryKey: ['nba-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['nba-team-records'] });
+    toast.info('Refreshing data from live API...');
+  };
 
   const isFetching = playersFetching || statsFetching || recordsFetching;
   const isInitialLoad = players.length === 0 && playersFetching;
@@ -142,8 +151,20 @@ const Index = () => {
                   NBA Cards
                 </h1>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  {players.length} Active Players · Live 2025-26 Stats
-                  {isFetching && <RefreshCw className="h-3 w-3 animate-spin text-primary" aria-label="Loading" />}
+                  {players.length} Players
+                  {isUsingFallbackData()
+                    ? <span className="text-yellow-600 dark:text-yellow-400">· Sample Data</span>
+                    : <span className="text-green-600 dark:text-green-400">· Live</span>
+                  }
+                  {getLastRefreshed() && (
+                    <span>· Updated {getLastRefreshed()!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  )}
+                  {isFetching
+                    ? <RefreshCw className="h-3 w-3 animate-spin text-primary" aria-label="Loading" />
+                    : <button onClick={handleRefresh} className="hover:text-foreground transition-colors" aria-label="Refresh data" title="Refresh data">
+                        <RefreshCw className="h-3 w-3" />
+                      </button>
+                  }
                 </p>
               </div>
             </div>

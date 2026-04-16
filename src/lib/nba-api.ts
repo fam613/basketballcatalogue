@@ -4,7 +4,9 @@ import { NBA_TEAMS } from './nba-data'
 const loadFallbackData = () => import('./nba-data')
 
 let _usingFallback = false
+let _lastRefreshed: Date | null = null
 export function isUsingFallbackData() { return _usingFallback }
+export function getLastRefreshed() { return _lastRefreshed }
 
 interface ApiTeamResponse {
   id: number;
@@ -217,7 +219,11 @@ export async function fetchPlayers(): Promise<NBAPlayer[]> {
       return true
     })
 
-    if (deduped.length > 0) return deduped
+    if (deduped.length > 0) {
+      _lastRefreshed = new Date()
+      _usingFallback = false
+      return deduped
+    }
 
     _usingFallback = true
     const { NBA_PLAYERS } = await loadFallbackData()
