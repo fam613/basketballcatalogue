@@ -12,10 +12,10 @@ interface PlayerCardProps {
 
 const StatBlock = ({ label, value }: { label: string; value: string | number }) => (
   <div className="text-center">
-    <div className="text-2xl font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+    <div className="text-lg sm:text-2xl font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
       {value}
     </div>
-    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">{label}</div>
+    <div className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-medium">{label}</div>
   </div>
 );
 

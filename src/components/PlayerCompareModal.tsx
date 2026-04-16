@@ -94,8 +94,8 @@ export function PlayerCompareModal({ players, stats, open, onOpenChange }: Playe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
-        <div className="p-6 pb-3">
+      <DialogContent className="max-w-lg max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-0">
+        <div className="p-4 sm:p-6 pb-3">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-center" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
               Player Comparison
@@ -105,16 +105,16 @@ export function PlayerCompareModal({ players, stats, open, onOpenChange }: Playe
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex justify-between mt-4 px-4">
+          <div className="flex justify-between mt-4 px-0 sm:px-4 gap-2">
             <PlayerHeader player={p1} />
-            <div className="flex items-center">
+            <div className="flex items-center shrink-0">
               <span className="text-xs font-bold text-muted-foreground bg-muted rounded-full px-2 py-0.5">VS</span>
             </div>
             <PlayerHeader player={p2} />
           </div>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className="px-4 sm:px-6 pb-6">
           {s1 && s2 ? (
             <div className="space-y-1">
               {STAT_ROWS.map((row) => (

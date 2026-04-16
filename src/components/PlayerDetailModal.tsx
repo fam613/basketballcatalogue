@@ -11,12 +11,12 @@ interface PlayerDetailModalProps {
 }
 
 const BigStat = ({ label, value, suffix }: { label: string; value: string | number; suffix?: string }) => (
-  <div className="text-center p-3 rounded-xl bg-muted/50">
-    <div className="text-3xl font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+  <div className="text-center p-2 sm:p-3 rounded-xl bg-muted/50">
+    <div className="text-xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
       {value}
-      {suffix && <span className="text-lg text-muted-foreground">{suffix}</span>}
+      {suffix && <span className="text-sm sm:text-lg text-muted-foreground">{suffix}</span>}
     </div>
-    <div className="text-xs uppercase tracking-widest text-muted-foreground font-medium mt-1">{label}</div>
+    <div className="text-[9px] sm:text-xs uppercase tracking-widest text-muted-foreground font-medium mt-1">{label}</div>
   </div>
 );
 
@@ -36,26 +36,26 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-lg max-h-[85vh] sm:max-h-[90vh] overflow-y-auto p-0">
         <div
-          className="p-6 pb-4"
+          className="p-4 sm:p-6 pb-3 sm:pb-4"
           style={{ background: `linear-gradient(135deg, ${player.team.color}18, ${player.team.secondaryColor}18)` }}
         >
           <div
-            className="h-1.5 w-16 rounded-full mb-4"
+            className="h-1.5 w-16 rounded-full mb-3 sm:mb-4"
             style={{ background: `linear-gradient(90deg, ${player.team.color}, ${player.team.secondaryColor})` }}
           />
           <DialogHeader>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <PlayerAvatar player={player} size="lg" rounded="2xl" />
-              <div>
-                <DialogDescription className="text-xs font-semibold uppercase tracking-wider mb-0.5">
+              <div className="min-w-0">
+                <DialogDescription className="text-xs font-semibold uppercase tracking-wider mb-0.5 truncate">
                   {player.team.full_name} · #{player.jersey_number}
                 </DialogDescription>
-                <DialogTitle className="text-2xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                <DialogTitle className="text-xl sm:text-2xl font-bold truncate" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   {player.first_name} {player.last_name}
                 </DialogTitle>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                   {player.position} · {player.height} · {player.weight} lbs
                 </p>
               </div>
@@ -63,7 +63,7 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
           </DialogHeader>
         </div>
 
-        <div className="px-6 pb-6 space-y-5">
+        <div className="px-4 sm:px-6 pb-6 space-y-4 sm:space-y-5">
           {stats && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-4 gap-2">
               <BigStat label="PPG" value={stats.pts.toFixed(1)} />

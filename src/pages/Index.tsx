@@ -148,15 +148,15 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="flex-1 flex items-center gap-3 sm:justify-end">
+            <div className="flex-1 flex flex-wrap items-center gap-2 sm:gap-3 sm:justify-end">
               {viewMode === 'grid' && !compareMode && (
-                <div className="relative flex-1 max-w-sm">
+                <div className="relative flex-1 min-w-[180px] max-w-sm order-first sm:order-none">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search players or teams..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 h-9 text-sm"
+                    className="pl-9 h-11 sm:h-9 text-sm"
                   />
                 </div>
               )}
@@ -164,47 +164,47 @@ const Index = () => {
               {(viewMode === 'grid' || viewMode === 'teams') && (
                 <button
                   onClick={() => compareMode ? exitCompare() : setCompareMode(true)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3 py-2 sm:py-1.5 text-sm font-medium rounded-lg border transition-colors shrink-0 min-h-[44px] sm:min-h-0 ${
                     compareMode
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'border-border bg-card text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <GitCompareArrows className="h-4 w-4" />
-                  {compareMode ? 'Exit Compare' : 'Compare'}
+                  <span className="hidden xs:inline">{compareMode ? 'Exit Compare' : 'Compare'}</span>
                 </button>
               )}
 
               <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
                 <button
                   onClick={() => { setViewMode('grid'); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
                     viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <LayoutGrid className="h-4 w-4" /> Cards
+                  <LayoutGrid className="h-4 w-4" /> <span className="hidden sm:inline">Cards</span>
                 </button>
                 <button
                   onClick={() => { setViewMode('teams'); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
                     viewMode === 'teams' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Building2 className="h-4 w-4" /> Teams
+                  <Building2 className="h-4 w-4" /> <span className="hidden sm:inline">Teams</span>
                 </button>
                 <button
                   onClick={() => { setViewMode('standings'); exitCompare(); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 ${
                     viewMode === 'standings' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Trophy className="h-4 w-4" /> Standings
+                  <Trophy className="h-4 w-4" /> <span className="hidden sm:inline">Standings</span>
                 </button>
               </div>
 
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                className="p-2.5 sm:p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                 aria-label="Toggle dark mode"
               >
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -213,30 +213,32 @@ const Index = () => {
           </div>
 
           {viewMode === 'grid' && !compareMode && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {FILTER_BUTTONS.map(({ key, label, icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setGridFilter(key)}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    gridFilter === key
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {icon === 'heart' && <Heart className={`h-3 w-3 ${gridFilter === key ? 'fill-current' : ''}`} />}
-                  {icon === 'star' && <Star className={`h-3 w-3 ${gridFilter === key ? 'fill-current' : ''}`} />}
-                  {label}
-                </button>
-              ))}
+            <div className="mt-3 space-y-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {FILTER_BUTTONS.map(({ key, label, icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => setGridFilter(key)}
+                    className={`flex items-center gap-1 px-3 py-1.5 sm:py-1 rounded-full text-xs font-semibold transition-colors min-h-[36px] sm:min-h-0 ${
+                      gridFilter === key
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {icon === 'heart' && <Heart className={`h-3 w-3 ${gridFilter === key ? 'fill-current' : ''}`} />}
+                    {icon === 'star' && <Star className={`h-3 w-3 ${gridFilter === key ? 'fill-current' : ''}`} />}
+                    {label}
+                  </button>
+                ))}
+              </div>
 
-              <div className="ml-auto flex items-center gap-1.5">
-                <ArrowDownWideNarrow className="h-3 w-3 text-muted-foreground" />
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mb-1">
+                <ArrowDownWideNarrow className="h-3 w-3 text-muted-foreground shrink-0" />
                 {SORT_OPTIONS.map(({ key, label }) => (
                   <button
                     key={key}
                     onClick={() => setSortBy(key)}
-                    className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                    className={`px-2.5 py-1.5 sm:py-1 rounded-full text-xs font-semibold transition-colors shrink-0 min-h-[36px] sm:min-h-0 ${
                       sortBy === key
                         ? 'bg-secondary text-secondary-foreground'
                         : 'bg-muted text-muted-foreground hover:text-foreground'
@@ -276,7 +278,7 @@ const Index = () => {
                       {/* Favorite heart */}
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleFavPlayer(player.id); }}
-                        className="absolute top-4 left-4 z-10 p-1 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-colors"
+                        className="absolute top-3 left-3 z-10 p-2 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
                         <Heart className={`h-4 w-4 transition-colors ${favPlayerIds.has(player.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
                       </button>
@@ -336,34 +338,34 @@ const Index = () => {
             exit={{ y: 80, opacity: 0 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
           >
-            <div className="flex items-center gap-3 bg-card border border-border shadow-xl rounded-2xl px-5 py-3">
+            <div className="flex items-center gap-2 sm:gap-3 bg-card border border-border shadow-xl rounded-2xl px-3 sm:px-5 py-3 max-w-[calc(100vw-2rem)]">
               {compareSlots.map((slot, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div key={i} className="flex items-center gap-1.5 sm:gap-2">
                   {slot ? (
                     <>
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
                         style={{ backgroundColor: slot.team.color }}
                       >
                         {slot.first_name[0]}{slot.last_name[0]}
                       </div>
-                      <span className="text-sm font-semibold max-w-[100px] truncate">
+                      <span className="text-sm font-semibold max-w-[60px] sm:max-w-[100px] truncate">
                         {slot.last_name}
                       </span>
-                      <button onClick={() => setCompareSlots(i === 0 ? [null, compareSlots[1]] : [compareSlots[0], null])} className="text-muted-foreground hover:text-foreground">
+                      <button onClick={() => setCompareSlots(i === 0 ? [null, compareSlots[1]] : [compareSlots[0], null])} className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground">
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </>
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-muted-foreground/40" />
+                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-muted-foreground/40 shrink-0" />
                   )}
-                  {i === 0 && <span className="text-xs font-bold text-muted-foreground mx-1">vs</span>}
+                  {i === 0 && <span className="text-xs font-bold text-muted-foreground">vs</span>}
                 </div>
               ))}
               <button
                 disabled={selectedCount < 2}
                 onClick={() => setCompareOpen(true)}
-                className="ml-2 px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40 transition-opacity"
+                className="ml-1 sm:ml-2 px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40 transition-opacity min-h-[44px]"
               >
                 Compare
               </button>

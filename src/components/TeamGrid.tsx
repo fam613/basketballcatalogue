@@ -38,7 +38,7 @@ function TeamTile({ team, onClick, isFav, onToggleFav }: { team: NBATeam; onClic
             {onToggleFav && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleFav(); }}
-                className="p-1 rounded-full hover:bg-muted transition-colors"
+                className="p-2 rounded-full hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center -m-1"
               >
                 <Star className={`h-4 w-4 transition-colors ${isFav ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} />
               </button>
