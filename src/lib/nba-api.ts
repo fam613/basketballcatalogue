@@ -133,31 +133,54 @@ function mapAggregatedStats(playerId: number, statLines: any[]): PlayerStats {
   }
 }
 
+// Valid NBA team IDs from the balldontlie API (30 NBA teams)
+const NBA_TEAM_IDS = new Set([
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+])
+
+function isActiveNbaPlayer(p: any): boolean {
+  // Must have a team object with a valid NBA team ID
+  if (!p.team || !p.team.id || !NBA_TEAM_IDS.has(p.team.id)) return false
+  // Must have a position assigned (inactive players often lack one)
+  if (!p.position || p.position.trim() === '') return false
+  // Must have a team abbreviation
+  if (!p.team.abbreviation || p.team.abbreviation.trim() === '') return false
+  return true
+}
+
 export async function fetchPlayers(): Promise<NBAPlayer[]> {
   try {
-    // Fetch first few pages of players (API returns 25 per page by default)
+    // Paginate through ALL players, filtering for active NBA roster players
     const allPlayers: NBAPlayer[] = []
     let cursor: number | null = null
-    const maxPages = 4 // ~100 players
-    
+    const maxPages = 20 // safety limit to prevent infinite loops
+
     for (let page = 0; page < maxPages; page++) {
       const params: Record<string, QueryValue> = { per_page: 100 }
-      if (cursor) params.cursor = String(cursor)
-      
+      if (cursor) params.cursor = cursor
+
       const data = await callNbaApi('players', params)
-      
+
       if (data.data && Array.isArray(data.data)) {
-        const mapped = data.data
-          .filter((p: any) => p.team && p.position) // only active players with positions
-          .map(mapApiPlayer)
-        allPlayers.push(...mapped)
+        const active = data.data.filter(isActiveNbaPlayer).map(mapApiPlayer)
+        allPlayers.push(...active)
       }
-      
+
       if (!data.meta?.next_cursor) break
       cursor = data.meta.next_cursor
     }
-    
-    return allPlayers.length > 0 ? allPlayers : NBA_PLAYERS
+
+    // Deduplicate by player ID (API may return duplicates across pages)
+    const seen = new Set<number>()
+    const deduped = allPlayers.filter(p => {
+      if (seen.has(p.id)) return false
+      seen.add(p.id)
+      return true
+    })
+
+    return deduped.length > 0 ? deduped : NBA_PLAYERS
   } catch (error) {
     console.warn('Failed to fetch players from API, using fallback data:', error)
     return NBA_PLAYERS
