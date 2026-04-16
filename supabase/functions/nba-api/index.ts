@@ -5,6 +5,18 @@ const corsHeaders = {
 
 const API_BASE = 'https://api.balldontlie.io/v1'
 
+// Exact endpoints allowed, plus prefix matches for sub-paths (e.g. players/active)
+const ALLOWED_ENDPOINTS = new Set(['players', 'players/active', 'teams', 'season_averages', 'stats', 'games'])
+const ALLOWED_PREFIXES = new Set(['players', 'teams', 'season_averages', 'stats', 'games'])
+
+function isEndpointAllowed(endpoint: string): boolean {
+  const cleanPath = endpoint.split('?')[0]
+  if (ALLOWED_ENDPOINTS.has(cleanPath)) return true
+  // Allow sub-paths like players/{id} by checking the first segment
+  const prefix = cleanPath.split('/')[0]
+  return ALLOWED_PREFIXES.has(prefix)
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -29,11 +41,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Allowlist of valid endpoints (includes players/active for ALL-STAR tier)
-    const validEndpoints = ['players', 'players/active', 'teams', 'season_averages', 'stats', 'games']
-    const cleanPath = endpoint.split('?')[0]
-    if (!validEndpoints.includes(cleanPath) && !validEndpoints.includes(cleanPath.split('/')[0])) {
-      return new Response(JSON.stringify({ error: 'Invalid endpoint' }), {
+    if (!isEndpointAllowed(endpoint)) {
+      return new Response(JSON.stringify({ error: `Invalid endpoint: ${endpoint}` }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -56,10 +65,11 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const isFallbackable = response.status === 429 || response.status >= 500
       return new Response(JSON.stringify({
-        error: isFallbackable ? 'SERVICE_UNAVAILABLE' : `API returned ${response.status}: ${text}`,
+        error: isFallbackable ? 'SERVICE_UNAVAILABLE' : `API returned ${response.status}`,
         fallback: isFallbackable,
+        status: response.status,
       }), {
-        status: 200,
+        status: 200, // Return 200 so client can parse the JSON
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -69,8 +79,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: error.message, fallback: true }), {
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

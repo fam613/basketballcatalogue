@@ -97,9 +97,9 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
             <InfoRow label="Team Record" value={`${player.team.wins}W - ${player.team.losses}L`} />
             <InfoRow label="Games Played" value={stats ? String(stats.gp) : 'N/A'} />
             <InfoRow label="Draft" value={draftInfo} />
-            <InfoRow label="College" value={player.college} />
-            <InfoRow label="Country" value={player.country} />
-            <InfoRow label="Career Teams" value={[...new Set(player.career_teams)].join(' → ')} />
+            {player.college && <InfoRow label="College" value={player.college} />}
+            {player.country && <InfoRow label="Country" value={player.country} />}
+            {player.career_teams?.length > 0 && <InfoRow label="Career Teams" value={[...new Set(player.career_teams)].join(' → ')} />}
           </motion.div>
         </div>
       </DialogContent>
