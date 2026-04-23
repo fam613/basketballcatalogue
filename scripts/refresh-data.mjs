@@ -144,37 +144,43 @@ async function fetchSeasonAverages(playerIds) {
   const currentYear = new Date().getFullYear()
   const season = new Date().getMonth() >= 9 ? currentYear : currentYear - 1
   console.log(`Fetching season averages for ${season}-${season + 1}...`)
+  console.log(`  Pacing: 50 req/min (well under ALL-STAR 60/min limit)`)
+  console.log(`  Expected runtime: ~${Math.ceil(playerIds.length * 1.2 / 60)} minutes`)
 
   const stats = {}
   let done = 0
   let consecutiveFailures = 0
+  let requestDelay = 1200 // 50 req/min — safely under ALL-STAR's 60/min
 
-  // Fetch one at a time with generous delays to avoid rate limits
   for (let i = 0; i < playerIds.length; i++) {
     const pid = playerIds[i]
     try {
       const data = await api('season_averages', { player_id: pid, season })
       if (data.data?.length > 0) {
         stats[pid] = data.data[0]
-        consecutiveFailures = 0
       }
+      consecutiveFailures = 0
     } catch (err) {
       consecutiveFailures++
-      // If rate-limited, wait longer before continuing
-      if (consecutiveFailures >= 3) {
-        console.log(`\n  Rate limited — waiting 60s before retrying...`)
-        await delay(60_000)
+
+      // Progressive backoff: slow down permanently after rate limits
+      if (consecutiveFailures >= 2) {
+        console.log(`\n  Rate limited — cooling down 90s and slowing rate...`)
+        await delay(90_000)
+        // Permanently reduce rate for the rest of the run
+        requestDelay = Math.min(requestDelay + 500, 3000)
+        console.log(`  New rate: ${Math.floor(60000 / requestDelay)} req/min`)
         consecutiveFailures = 0
         i-- // retry this player
         continue
       }
     }
     done++
-    if (done % 25 === 0) {
-      process.stdout.write(`  ${done}/${playerIds.length} players (${Object.keys(stats).length} with stats)\r`)
+    if (done % 25 === 0 || done === playerIds.length) {
+      const pct = ((Object.keys(stats).length / playerIds.length) * 100).toFixed(1)
+      process.stdout.write(`  ${done}/${playerIds.length} processed, ${Object.keys(stats).length} with stats (${pct}%)        \r`)
     }
-    // Pace: ~2 requests/sec to stay well under rate limits
-    await delay(500)
+    await delay(requestDelay)
   }
   console.log(`\n  Got stats for ${Object.keys(stats).length}/${playerIds.length} players`)
   return stats

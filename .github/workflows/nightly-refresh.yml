@@ -34,7 +34,8 @@ jobs:
 
       - name: Refresh fallback data from balldontlie API
         run: node scripts/refresh-data.mjs
-        timeout-minutes: 10
+        # 517 players at 50 req/min = ~10 min, with rate-limit backoffs up to ~20 min
+        timeout-minutes: 25
 
       - name: Verify build still works
         run: |
