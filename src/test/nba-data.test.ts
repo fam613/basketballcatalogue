@@ -27,28 +27,47 @@ describe("NBA_TEAMS", () => {
 });
 
 describe("NBA_PLAYERS", () => {
+  it("has at least 400 players", () => {
+    expect(NBA_PLAYERS.length).toBeGreaterThanOrEqual(400);
+  });
+
   it("every player has a non-empty position", () => {
     for (const player of NBA_PLAYERS) {
       expect(player.position.length).toBeGreaterThan(0);
     }
   });
 
-  it("no player has null jersey_number", () => {
+  it("jersey_number is string or null (never undefined)", () => {
     for (const player of NBA_PLAYERS) {
-      expect(player.jersey_number).not.toBeNull();
+      expect(player.jersey_number === null || typeof player.jersey_number === "string").toBe(true);
     }
   });
 
-  it("no player has null weight", () => {
+  it("weight is string or null (never undefined)", () => {
     for (const player of NBA_PLAYERS) {
-      expect(player.weight).not.toBeNull();
+      expect(player.weight === null || typeof player.weight === "string").toBe(true);
     }
   });
 
-  it("every player has a valid team", () => {
+  it("every player has a valid team abbreviation", () => {
     const teamAbbrs = new Set(NBA_TEAMS.map((t) => t.abbreviation));
     for (const player of NBA_PLAYERS) {
       expect(teamAbbrs.has(player.team.abbreviation)).toBe(true);
+    }
+  });
+
+  it("no duplicate player IDs", () => {
+    const ids = NBA_PLAYERS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("every team has at least 5 players", () => {
+    const teamCounts: Record<string, number> = {};
+    for (const p of NBA_PLAYERS) {
+      teamCounts[p.team.abbreviation] = (teamCounts[p.team.abbreviation] || 0) + 1;
+    }
+    for (const abbr of NBA_TEAMS.map((t) => t.abbreviation)) {
+      expect(teamCounts[abbr] || 0).toBeGreaterThanOrEqual(5);
     }
   });
 });

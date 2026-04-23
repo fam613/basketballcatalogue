@@ -147,31 +147,36 @@ async function fetchSeasonAverages(playerIds) {
 
   const stats = {}
   let done = 0
-  let failures = 0
+  let consecutiveFailures = 0
 
-  for (let i = 0; i < playerIds.length; i += 5) {
-    if (failures >= 5) {
-      console.log(`\n  Stopping early after ${failures} consecutive failures`)
-      break
-    }
-    const chunk = playerIds.slice(i, i + 5)
-    const promises = chunk.map(async (pid) => {
-      try {
-        const data = await api('season_averages', { player_id: pid, season })
-        if (data.data?.length > 0) {
-          stats[pid] = data.data[0]
-          failures = 0
-        }
-      } catch {
-        failures++
+  // Fetch one at a time with generous delays to avoid rate limits
+  for (let i = 0; i < playerIds.length; i++) {
+    const pid = playerIds[i]
+    try {
+      const data = await api('season_averages', { player_id: pid, season })
+      if (data.data?.length > 0) {
+        stats[pid] = data.data[0]
+        consecutiveFailures = 0
       }
-    })
-    await Promise.all(promises)
-    done += chunk.length
-    process.stdout.write(`  ${done}/${playerIds.length} players fetched\r`)
-    await delay(200)
+    } catch (err) {
+      consecutiveFailures++
+      // If rate-limited, wait longer before continuing
+      if (consecutiveFailures >= 3) {
+        console.log(`\n  Rate limited — waiting 60s before retrying...`)
+        await delay(60_000)
+        consecutiveFailures = 0
+        i-- // retry this player
+        continue
+      }
+    }
+    done++
+    if (done % 25 === 0) {
+      process.stdout.write(`  ${done}/${playerIds.length} players (${Object.keys(stats).length} with stats)\r`)
+    }
+    // Pace: ~2 requests/sec to stay well under rate limits
+    await delay(500)
   }
-  console.log(`\n  Got stats for ${Object.keys(stats).length} players`)
+  console.log(`\n  Got stats for ${Object.keys(stats).length}/${playerIds.length} players`)
   return stats
 }
 
@@ -297,24 +302,9 @@ function generateFile(teams, records, players, stats) {
   lines.push('}')
   lines.push('')
 
-  // Utility functions
   lines.push(`export function getPlayersForTeam(teamAbbr: string): NBAPlayer[] {`)
   lines.push(`  return NBA_PLAYERS.filter(p => p.team.abbreviation === teamAbbr);`)
   lines.push(`}`)
-  lines.push('')
-  lines.push(`export function searchPlayers(query: string): NBAPlayer[] {`)
-  lines.push(`  const q = query.toLowerCase();`)
-  lines.push('  return NBA_PLAYERS.filter(p =>')
-  lines.push('    `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||')
-  lines.push('    p.team.full_name.toLowerCase().includes(q) ||')
-  lines.push('    p.team.abbreviation.toLowerCase().includes(q)')
-  lines.push('  );')
-  lines.push('}')
-  lines.push('')
-  lines.push(`export function filterByPosition(players: NBAPlayer[], position: string): NBAPlayer[] {`)
-  lines.push(`  if (position === 'ALL') return players;`)
-  lines.push(`  return players.filter(p => p.position.includes(position.charAt(0)));`)
-  lines.push('}')
   lines.push('')
 
   return lines.join('\n')

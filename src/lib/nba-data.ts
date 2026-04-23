@@ -600,17 +600,3 @@ export const PLAYER_STATS: Record<number, PlayerStats> = {
 export function getPlayersForTeam(teamAbbr: string): NBAPlayer[] {
   return NBA_PLAYERS.filter(p => p.team.abbreviation === teamAbbr);
 }
-
-export function searchPlayers(query: string): NBAPlayer[] {
-  const q = query.toLowerCase();
-  return NBA_PLAYERS.filter(p =>
-    `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
-    p.team.full_name.toLowerCase().includes(q) ||
-    p.team.abbreviation.toLowerCase().includes(q)
-  );
-}
-
-export function filterByPosition(players: NBAPlayer[], position: string): NBAPlayer[] {
-  if (position === 'ALL') return players;
-  return players.filter(p => p.position.includes(position.charAt(0)));
-}

@@ -164,9 +164,7 @@ const Index = () => {
                     ? <span className="text-yellow-600 dark:text-yellow-400">· Sample Data</span>
                     : <span className="text-green-600 dark:text-green-400">· Live</span>
                   }
-                  {getLastRefreshed() && (
-                    <span>· Updated {getLastRefreshed()!.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  )}
+                  {(() => { const t = getLastRefreshed(); return t ? <span>· Updated {t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> : null; })()}
                   {isFetching
                     ? <RefreshCw className="h-3 w-3 animate-spin text-primary" aria-label="Loading" />
                     : <button onClick={handleRefresh} className="hover:text-foreground transition-colors" aria-label="Refresh data" title="Refresh data">
