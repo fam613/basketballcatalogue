@@ -46,7 +46,7 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
             <PlayerAvatar player={player} size="md" rounded="full" />
             <div className="min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {player.team.abbreviation}{player.jersey_number ? ` · #${player.jersey_number}` : ''}
+                {player.team.abbreviation}{player.jersey_number != null && player.jersey_number !== '' ? ` · #${player.jersey_number}` : ''}
                 {teamRecord && <span className="normal-case"> · {teamRecord.wins}W-{teamRecord.losses}L</span>}
               </div>
               <div className="font-bold text-lg leading-tight truncate" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>

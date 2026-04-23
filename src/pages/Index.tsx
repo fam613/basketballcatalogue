@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon, ArrowDownWideNarrow } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
@@ -57,12 +57,12 @@ const Index = () => {
   const { data: statsMap = {}, isFetching: statsFetching } = usePlayerStatsQuery(playerIds);
   const { data: teamRecords = {}, isFetching: recordsFetching } = useTeamRecordsQuery();
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['nba-players'] });
     queryClient.invalidateQueries({ queryKey: ['nba-stats'] });
     queryClient.invalidateQueries({ queryKey: ['nba-team-records'] });
     toast.info('Refreshing data from live API...');
-  };
+  }, [queryClient]);
 
   const isFetching = playersFetching || statsFetching || recordsFetching;
   const isInitialLoad = players.length === 0 && playersFetching;

@@ -13,7 +13,11 @@ function loadSet(key: string): Set<number> {
 }
 
 function saveSet(key: string, set: Set<number>) {
-  localStorage.setItem(key, JSON.stringify([...set]));
+  try {
+    localStorage.setItem(key, JSON.stringify([...set]));
+  } catch {
+    // Storage quota exceeded or disabled — favorites won't persist but app stays functional
+  }
 }
 
 export function useFavorites() {

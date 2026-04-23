@@ -50,7 +50,7 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
               <PlayerAvatar player={player} size="lg" rounded="2xl" />
               <div className="min-w-0">
                 <DialogDescription className="text-xs font-semibold uppercase tracking-wider mb-0.5 truncate">
-                  {player.team.full_name}{player.jersey_number ? ` · #${player.jersey_number}` : ''}
+                  {player.team.full_name}{player.jersey_number != null && player.jersey_number !== '' ? ` · #${player.jersey_number}` : ''}
                 </DialogDescription>
                 <DialogTitle className="text-xl sm:text-2xl font-bold truncate" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   {player.first_name} {player.last_name}

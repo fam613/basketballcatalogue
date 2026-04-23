@@ -295,7 +295,16 @@ function generateFile(teams, records, players, stats) {
     const pts = (s.pts ?? 0).toFixed(1)
     const reb = (s.reb ?? 0).toFixed(1)
     const ast = (s.ast ?? 0).toFixed(1)
-    const min = JSON.stringify(String(s.min ?? '0'))
+    // Convert "MM:SS" from API to decimal minutes string ("22.8")
+    const minutesPlayed = (() => {
+      const raw = String(s.min ?? '0')
+      if (raw.includes(':')) {
+        const [m, sec] = raw.split(':').map(Number)
+        return (m + (sec || 0) / 60).toFixed(1)
+      }
+      return (parseFloat(raw) || 0).toFixed(1)
+    })()
+    const min = JSON.stringify(minutesPlayed)
     const gp = s.games_played ?? 0
     const stl = (s.stl ?? 0).toFixed(1)
     const blk = (s.blk ?? 0).toFixed(1)

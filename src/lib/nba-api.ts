@@ -76,6 +76,11 @@ interface ApiPaginatedResponse<T> {
 }
 
 const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+
+if (!SUPABASE_PROJECT_ID || !SUPABASE_ANON_KEY) {
+  _lastError = 'Missing VITE_SUPABASE_PROJECT_ID or VITE_SUPABASE_PUBLISHABLE_KEY — API calls will fail and fallback data will be used'
+}
 
 type QueryValue = string | number | boolean | Array<string | number | boolean>
 
@@ -262,41 +267,61 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
     const season = new Date().getMonth() >= 9 ? currentYear : currentYear - 1
 
     const results: Record<number, PlayerStats> = {}
-    let consecutiveFailures = 0
+    let consecutiveChunkFailures = 0
 
     // Use the premium season_averages endpoint — one call per player but returns
     // clean pre-computed per-game averages (no manual aggregation needed)
     const chunkSize = 5
     for (let i = 0; i < playerIds.length; i += chunkSize) {
-      if (consecutiveFailures >= 5) break
+      if (consecutiveChunkFailures >= 3) break
 
       const chunk = playerIds.slice(i, i + chunkSize)
-      const promises = chunk.map(async (pid) => {
+      // Collect per-promise results, then aggregate after Promise.all (no shared mutable counter)
+      const outcomes = await Promise.all(chunk.map(async (pid) => {
         try {
           const data = await callNbaApi('season_averages', { player_id: pid, season })
           if (data.data && data.data.length > 0) {
             const s = data.data[0]
-            results[pid] = {
-              player_id: s.player_id ?? pid,
-              pts: s.pts ?? 0,
-              reb: s.reb ?? 0,
-              ast: s.ast ?? 0,
-              min: s.min ?? '0',
-              gp: s.games_played ?? 0,
-              stl: s.stl ?? 0,
-              blk: s.blk ?? 0,
-              fg_pct: s.fg_pct ?? 0,
-              fg3_pct: s.fg3_pct ?? 0,
-              ft_pct: s.ft_pct ?? 0,
-              turnover: s.turnover ?? 0,
+            // Convert MM:SS format to decimal minutes if needed
+            const minStr = String(s.min ?? '0')
+            const minDecimal = minStr.includes(':')
+              ? (() => { const [m, sec] = minStr.split(':').map(Number); return (m + (sec || 0) / 60).toFixed(1) })()
+              : minStr
+            return {
+              pid,
+              ok: true,
+              stats: {
+                player_id: s.player_id ?? pid,
+                pts: s.pts ?? 0,
+                reb: s.reb ?? 0,
+                ast: s.ast ?? 0,
+                min: minDecimal,
+                gp: s.games_played ?? 0,
+                stl: s.stl ?? 0,
+                blk: s.blk ?? 0,
+                fg_pct: s.fg_pct ?? 0,
+                fg3_pct: s.fg3_pct ?? 0,
+                ft_pct: s.ft_pct ?? 0,
+                turnover: s.turnover ?? 0,
+              } as PlayerStats,
             }
-            consecutiveFailures = 0
           }
+          return { pid, ok: true, stats: null }
         } catch {
-          consecutiveFailures++
+          return { pid, ok: false, stats: null }
         }
-      })
-      await Promise.all(promises)
+      }))
+
+      // Aggregate after all promises settle — no race
+      let chunkHadSuccess = false
+      for (const outcome of outcomes) {
+        if (outcome.ok && outcome.stats) {
+          results[outcome.pid] = outcome.stats
+          chunkHadSuccess = true
+        }
+      }
+      consecutiveChunkFailures = chunkHadSuccess ? 0 : consecutiveChunkFailures + 1
+
       if (i + chunkSize < playerIds.length) await delay(150)
     }
 

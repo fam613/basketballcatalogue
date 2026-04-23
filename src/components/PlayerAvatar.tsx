@@ -20,7 +20,7 @@ const ROUNDED = {
 };
 
 export function PlayerAvatar({ player, size = 'md', rounded = 'full', className = '' }: PlayerAvatarProps) {
-  const initials = `${player.first_name[0]}${player.last_name[0]}`;
+  const initials = `${player.first_name?.[0] ?? '?'}${player.last_name?.[0] ?? '?'}`;
   const sizeClass = SIZES[size];
   const roundedClass = ROUNDED[rounded];
 
