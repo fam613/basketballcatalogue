@@ -233,6 +233,8 @@ function generateFile(teams, records, players, stats) {
   const lines = []
   lines.push(`import { NBAPlayer, NBATeam, PlayerStats } from './types'`)
   lines.push('')
+  lines.push(`export const DATA_LAST_UPDATED = '${new Date().toISOString()}'`)
+  lines.push('')
 
   // NBA_TEAMS
   lines.push('export const NBA_TEAMS: NBATeam[] = [')
@@ -323,21 +325,56 @@ function generateFile(teams, records, players, stats) {
 // ---------------------------------------------------------------------------
 async function main() {
   console.log('=== NBA Fallback Data Refresh ===\n')
+  console.log(`Timestamp: ${new Date().toISOString()}\n`)
 
   const [teams, rawPlayers] = await Promise.all([fetchTeams(), fetchAllPlayers()])
   const records = await fetchTeamRecords()
   const playerIds = rawPlayers.map((p) => p.id)
   const stats = await fetchSeasonAverages(playerIds)
 
-  console.log('\nGenerating nba-data.ts...')
-  const content = generateFile(teams, records, rawPlayers, stats)
-  const outPath = resolve(ROOT, 'src/lib/nba-data.ts')
-  writeFileSync(outPath, content, 'utf-8')
-
   const playerCount = rawPlayers.length
   const statsCount = Object.keys(stats).length
-  console.log(`\nDone! Wrote ${playerCount} players, ${statsCount} stat lines, ${Object.keys(records).length} team records`)
+  const teamCount = Object.keys(records).length
+
+  // Validate: don't overwrite good data with bad data
+  if (playerCount < 100) {
+    console.error(`\nABORTED: Only ${playerCount} players fetched (expected 400+). API may be down.`)
+    console.error('Keeping existing fallback data unchanged.')
+    process.exit(1)
+  }
+  if (teams.length < 30) {
+    console.error(`\nABORTED: Only ${teams.length} teams fetched (expected 30). API may be down.`)
+    console.error('Keeping existing fallback data unchanged.')
+    process.exit(1)
+  }
+
+  const outPath = resolve(ROOT, 'src/lib/nba-data.ts')
+  const backupPath = resolve(ROOT, 'src/lib/nba-data.backup.ts')
+
+  // Keep a backup of the previous data
+  try {
+    const existing = readFileSync(outPath, 'utf-8')
+    writeFileSync(backupPath, existing, 'utf-8')
+    console.log(`\nBacked up previous data to nba-data.backup.ts`)
+  } catch {
+    // No existing file to back up — that's fine
+  }
+
+  console.log('Generating nba-data.ts...')
+  const content = generateFile(teams, records, rawPlayers, stats)
+  writeFileSync(outPath, content, 'utf-8')
+
+  console.log(`\nDone! Wrote ${playerCount} players, ${statsCount} stat lines, ${teamCount} team records`)
   console.log(`Output: ${outPath}`)
+  console.log(`Data timestamp: ${new Date().toISOString()}`)
+
+  // Report freshness
+  const playersWithStats = playerIds.filter(id => stats[id]).length
+  const pct = ((playersWithStats / playerCount) * 100).toFixed(1)
+  console.log(`\nStat coverage: ${playersWithStats}/${playerCount} players (${pct}%)`)
+  if (playersWithStats < playerCount * 0.5) {
+    console.warn('WARNING: Less than 50% of players have stats — API may be partially down')
+  }
 }
 
 main().catch((err) => {

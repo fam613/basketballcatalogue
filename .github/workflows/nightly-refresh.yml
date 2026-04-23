@@ -1,0 +1,64 @@
+name: Nightly Data Refresh
+
+on:
+  schedule:
+    # 4:00 AM EST = 9:00 AM UTC (EST is UTC-5)
+    # During EDT (Mar-Nov), 4:00 AM EDT = 8:00 AM UTC
+    # Using 9:00 AM UTC to cover EST year-round
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Create .env for API access
+        run: |
+          echo "VITE_SUPABASE_PROJECT_ID=${{ secrets.VITE_SUPABASE_PROJECT_ID }}" >> .env
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" >> .env
+          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
+
+      - name: Refresh fallback data from balldontlie API
+        run: node scripts/refresh-data.mjs
+        timeout-minutes: 10
+
+      - name: Verify build still works
+        run: |
+          npx tsc -p tsconfig.app.json --noEmit
+          npm run build
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet src/lib/nba-data.ts; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No data changes detected"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            PLAYERS=$(grep -c "first_name" src/lib/nba-data.ts || echo 0)
+            echo "players=$PLAYERS" >> $GITHUB_OUTPUT
+            echo "Data changed: $PLAYERS players"
+          fi
+
+      - name: Commit and push updated data
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/lib/nba-data.ts
+          git commit -m "data: nightly refresh — ${{ steps.changes.outputs.players }} players ($(date -u +%Y-%m-%d))"
+          git push

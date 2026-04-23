@@ -11,7 +11,13 @@ let _apiErrorCount = 0
 export function isUsingFallbackData() { return _usingFallback }
 export function getLastRefreshed() { return _lastRefreshed }
 export function getApiStatus() {
-  return { lastError: _lastError, calls: _apiCallCount, errors: _apiErrorCount, usingFallback: _usingFallback }
+  return { lastError: _lastError, calls: _apiCallCount, errors: _apiErrorCount, usingFallback: _usingFallback, lastRefreshed: _lastRefreshed }
+}
+
+export async function getFallbackDataAge(): Promise<number> {
+  const { DATA_LAST_UPDATED } = await loadFallbackData()
+  const updated = new Date(DATA_LAST_UPDATED)
+  return Math.floor((Date.now() - updated.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 interface ApiTeamResponse {

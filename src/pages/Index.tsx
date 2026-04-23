@@ -13,7 +13,7 @@ import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from 'sonner';
-import { isUsingFallbackData, getLastRefreshed, getApiStatus } from '@/lib/nba-api';
+import { isUsingFallbackData, getLastRefreshed, getApiStatus, getFallbackDataAge } from '@/lib/nba-api';
 import { useQueryClient } from '@tanstack/react-query';
 
 type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';
@@ -73,7 +73,10 @@ const Index = () => {
       hasToasted.current = true;
       const status = getApiStatus();
       if (isUsingFallbackData()) {
-        toast.error(`Live API failed — showing sample data${status.lastError ? ` (${status.lastError})` : ''}`, { duration: 8000 });
+        getFallbackDataAge().then(days => {
+          const ageMsg = days > 3 ? ` (fallback data is ${days} days old)` : '';
+          toast.error(`Live API failed — showing cached data${ageMsg}${status.lastError ? `\n${status.lastError}` : ''}`, { duration: 8000 });
+        });
       } else if (status.errors > 0) {
         toast.warning(`Loaded live data with ${status.errors} API errors`, { duration: 5000 });
       }
