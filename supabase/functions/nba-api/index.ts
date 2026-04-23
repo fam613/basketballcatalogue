@@ -3,7 +3,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-const API_BASE = 'https://api.balldontlie.io/v1'
+const API_BASE = 'https://api.balldontlie.io/nba/v1'
 
 // Exact endpoints allowed, plus prefix matches for sub-paths (e.g. players/active)
 const ALLOWED_ENDPOINTS = new Set(['players', 'players/active', 'teams', 'season_averages', 'stats', 'games'])

@@ -5,8 +5,14 @@ const loadFallbackData = () => import('./nba-data')
 
 let _usingFallback = false
 let _lastRefreshed: Date | null = null
+let _lastError: string | null = null
+let _apiCallCount = 0
+let _apiErrorCount = 0
 export function isUsingFallbackData() { return _usingFallback }
 export function getLastRefreshed() { return _lastRefreshed }
+export function getApiStatus() {
+  return { lastError: _lastError, calls: _apiCallCount, errors: _apiErrorCount, usingFallback: _usingFallback }
+}
 
 interface ApiTeamResponse {
   id: number;
@@ -85,6 +91,7 @@ async function callNbaApi(endpoint: string, params: Record<string, QueryValue> =
   if (Date.now() < rateLimitedUntil) {
     throw new Error('RATE_LIMITED')
   }
+  _apiCallCount++
   const url = createNbaApiUrl(endpoint, params)
   const response = await fetch(url, {
     headers: {
@@ -93,10 +100,14 @@ async function callNbaApi(endpoint: string, params: Record<string, QueryValue> =
     },
   })
   if (!response.ok) {
+    _apiErrorCount++
+    _lastError = `HTTP ${response.status} on ${endpoint}`
     throw new Error(`API error: ${response.status}`)
   }
   const data = await response.json()
   if (data?.fallback) {
+    _apiErrorCount++
+    _lastError = `Rate limited on ${endpoint} (status: ${data.status || 429})`
     rateLimitedUntil = Date.now() + 60_000
     throw new Error('RATE_LIMITED')
   }
@@ -245,46 +256,42 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
     const season = new Date().getMonth() >= 9 ? currentYear : currentYear - 1
 
     const results: Record<number, PlayerStats> = {}
+    let consecutiveFailures = 0
 
-    // Batch via the stats endpoint — one call per chunk of 25 players
-    const chunkSize = 25
+    // Use the premium season_averages endpoint — one call per player but returns
+    // clean pre-computed per-game averages (no manual aggregation needed)
+    const chunkSize = 5
     for (let i = 0; i < playerIds.length; i += chunkSize) {
+      if (consecutiveFailures >= 5) break
+
       const chunk = playerIds.slice(i, i + chunkSize)
-      try {
-        const playerStatLines: Record<number, ApiStatsResponse[]> = {}
-        let cursor: number | null = null
-        const maxPages = 10
-
-        for (let page = 0; page < maxPages; page++) {
-          const params: Record<string, QueryValue> = {
-            per_page: 100,
-            seasons: [season],
-            player_ids: chunk,
+      const promises = chunk.map(async (pid) => {
+        try {
+          const data = await callNbaApi('season_averages', { player_id: pid, season })
+          if (data.data && data.data.length > 0) {
+            const s = data.data[0]
+            results[pid] = {
+              player_id: s.player_id ?? pid,
+              pts: s.pts ?? 0,
+              reb: s.reb ?? 0,
+              ast: s.ast ?? 0,
+              min: s.min ?? '0',
+              gp: s.games_played ?? 0,
+              stl: s.stl ?? 0,
+              blk: s.blk ?? 0,
+              fg_pct: s.fg_pct ?? 0,
+              fg3_pct: s.fg3_pct ?? 0,
+              ft_pct: s.ft_pct ?? 0,
+              turnover: s.turnover ?? 0,
+            }
+            consecutiveFailures = 0
           }
-          if (cursor) params.cursor = cursor
-
-          const data = await callNbaApi('stats', params) as ApiPaginatedResponse<ApiStatsResponse>
-
-          if (!data.data || !Array.isArray(data.data)) break
-
-          for (const line of data.data) {
-            const pid = line.player?.id ?? line.player_id
-            if (!pid) continue
-            if (!playerStatLines[pid]) playerStatLines[pid] = []
-            playerStatLines[pid].push(line)
-          }
-
-          if (!data.meta?.next_cursor) break
-          cursor = data.meta.next_cursor
+        } catch {
+          consecutiveFailures++
         }
-
-        for (const [pid, lines] of Object.entries(playerStatLines)) {
-          results[Number(pid)] = mapAggregatedStats(Number(pid), lines)
-        }
-      } catch {
-        // skip chunk failures
-      }
-      if (i + chunkSize < playerIds.length) await delay(100)
+      })
+      await Promise.all(promises)
+      if (i + chunkSize < playerIds.length) await delay(150)
     }
 
     // Only load fallback for players missing stats
