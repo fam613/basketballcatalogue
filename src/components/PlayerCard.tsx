@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
 import { PlayerAvatar } from './PlayerAvatar';
+import { safeMinutes } from '@/lib/utils';
 
 interface PlayerCardProps {
   player: NBAPlayer;
@@ -61,7 +62,7 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
               <StatBlock label="PPG" value={stats.pts.toFixed(1)} />
               <StatBlock label="RPG" value={stats.reb.toFixed(1)} />
               <StatBlock label="APG" value={stats.ast.toFixed(1)} />
-              <StatBlock label="MIN" value={parseFloat(stats.min).toFixed(1)} />
+              <StatBlock label="MIN" value={safeMinutes(stats.min)} />
             </div>
           )}
         </div>

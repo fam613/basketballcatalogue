@@ -1,23 +1,32 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+const ALLOWED_ORIGINS = [
+  'https://basketballcatalogue.lovable.app',
+  'http://localhost:8080',
+  'http://localhost:5173',
+]
+
+function getCorsHeaders(origin: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o)) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  }
 }
 
 const API_BASE = 'https://api.balldontlie.io/nba/v1'
 
-// Exact endpoints allowed, plus prefix matches for sub-paths (e.g. players/active)
-const ALLOWED_ENDPOINTS = new Set(['players', 'players/active', 'teams', 'season_averages', 'stats', 'games'])
-const ALLOWED_PREFIXES = new Set(['players', 'teams', 'season_averages', 'stats', 'games'])
+const ALLOWED_PARAMS = new Set(['per_page', 'cursor', 'player_id', 'season', 'postseason', 'seasons[]', 'player_ids[]', 'team_ids[]'])
 
 function isEndpointAllowed(endpoint: string): boolean {
+  if (endpoint.includes('..') || endpoint.includes('//')) return false
   const cleanPath = endpoint.split('?')[0]
-  if (ALLOWED_ENDPOINTS.has(cleanPath)) return true
-  // Allow sub-paths like players/{id} by checking the first segment
-  const prefix = cleanPath.split('/')[0]
-  return ALLOWED_PREFIXES.has(prefix)
+  return /^(players\/active|players|teams|season_averages|stats|games)$/.test(cleanPath)
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -25,7 +34,7 @@ Deno.serve(async (req) => {
   try {
     const apiKey = Deno.env.get('BALLDONTLIE_API_KEY')?.trim()
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'API key not configured' }), {
+      return new Response(JSON.stringify({ error: 'Service unavailable' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -33,27 +42,27 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url)
     const endpoint = url.searchParams.get('endpoint')
-    
+
     if (!endpoint) {
-      return new Response(JSON.stringify({ error: 'Missing endpoint parameter' }), {
+      return new Response(JSON.stringify({ error: 'Bad request' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     if (!isEndpointAllowed(endpoint)) {
-      return new Response(JSON.stringify({ error: `Invalid endpoint: ${endpoint}` }), {
+      return new Response(JSON.stringify({ error: 'Bad request' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // Forward all query params except 'endpoint' to the API
     const apiUrl = new URL(`${API_BASE}/${endpoint}`)
     for (const [key, value] of url.searchParams.entries()) {
-      if (key !== 'endpoint') {
-        apiUrl.searchParams.append(key, value)
-      }
+      if (key === 'endpoint') continue
+      if (!ALLOWED_PARAMS.has(key)) continue
+      if (key === 'per_page' && parseInt(value) > 100) continue
+      apiUrl.searchParams.append(key, value)
     }
 
     const response = await fetch(apiUrl.toString(), {
@@ -61,15 +70,15 @@ Deno.serve(async (req) => {
     })
 
     const text = await response.text()
-    
+
     if (!response.ok) {
       const isFallbackable = response.status === 429 || response.status >= 500
       return new Response(JSON.stringify({
-        error: isFallbackable ? 'SERVICE_UNAVAILABLE' : `API returned ${response.status}`,
+        error: isFallbackable ? 'SERVICE_UNAVAILABLE' : 'Request failed',
         fallback: isFallbackable,
         status: response.status,
       }), {
-        status: 200, // Return 200 so client can parse the JSON
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -78,9 +87,8 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return new Response(JSON.stringify({ error: message }), {
+  } catch {
+    return new Response(JSON.stringify({ error: 'Internal error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
 import { PlayerAvatar } from './PlayerAvatar';
+import { safeMinutes } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 interface PlayerDetailModalProps {
@@ -69,7 +70,7 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
               <BigStat label="PPG" value={stats.pts.toFixed(1)} />
               <BigStat label="RPG" value={stats.reb.toFixed(1)} />
               <BigStat label="APG" value={stats.ast.toFixed(1)} />
-              <BigStat label="MIN" value={parseFloat(stats.min).toFixed(1)} />
+              <BigStat label="MIN" value={safeMinutes(stats.min)} />
             </motion.div>
           )}
 

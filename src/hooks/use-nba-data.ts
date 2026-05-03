@@ -3,22 +3,22 @@ import { fetchPlayers, fetchSeasonAverages, fetchTeamRecords } from '@/lib/nba-a
 import { NBAPlayer, PlayerStats } from '@/lib/types'
 
 const THIRTY_MINUTES = 30 * 60 * 1000
+const JITTER = () => Math.random() * 5 * 60 * 1000
 
 export function usePlayersQuery() {
   return useQuery<NBAPlayer[]>({
     queryKey: ['nba-players'],
     queryFn: fetchPlayers,
     staleTime: THIRTY_MINUTES,
-    refetchInterval: THIRTY_MINUTES,
+    refetchInterval: THIRTY_MINUTES + JITTER(),
   })
 }
 
 export function usePlayerStatsQuery(playerIds: number[]) {
   return useQuery<Record<number, PlayerStats>>({
-    queryKey: ['nba-stats', playerIds],
+    queryKey: ['nba-stats', playerIds.length],
     queryFn: () => fetchSeasonAverages(playerIds),
     staleTime: THIRTY_MINUTES,
-    refetchInterval: THIRTY_MINUTES,
     enabled: playerIds.length > 0,
   })
 }
@@ -28,6 +28,6 @@ export function useTeamRecordsQuery() {
     queryKey: ['nba-team-records'],
     queryFn: fetchTeamRecords,
     staleTime: THIRTY_MINUTES,
-    refetchInterval: THIRTY_MINUTES,
+    refetchInterval: THIRTY_MINUTES + JITTER(),
   })
 }
