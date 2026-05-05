@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon, ArrowDownWideNarrow } from 'lucide-react';
+import { Search, LayoutGrid, Building2, RefreshCw, GitCompareArrows, X, Heart, Star, Trophy, Sun, Moon, ArrowDownWideNarrow, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PlayerCard } from '@/components/PlayerCard';
 import { PlayerCardSkeleton } from '@/components/PlayerCardSkeleton';
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { isUsingFallbackData, getLastRefreshed, getApiStatus } from '@/lib/nba-api';
 import { DATA_LAST_UPDATED } from '@/lib/nba-data';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 
 type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';
 type SortOption = 'default' | 'ppg' | 'rpg' | 'apg' | 'min';
@@ -38,6 +39,7 @@ const FILTER_BUTTONS: { key: GridFilter; label: string; icon?: 'heart' | 'star' 
 ];
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [gridFilter, setGridFilter] = useState<GridFilter>('ALL');
@@ -58,6 +60,28 @@ const Index = () => {
   const { data: statsMap = {}, isFetching: statsFetching } = usePlayerStatsQuery(playerIds);
   const { data: teamRecords = {}, isFetching: recordsFetching } = useTeamRecordsQuery();
 
+  const isFetching = playersFetching || statsFetching || recordsFetching;
+  const isInitialLoad = players.length === 0 && playersFetching;
+
+  // Deep link: open player modal from URL param ?player=123
+  useEffect(() => {
+    const playerId = searchParams.get('player');
+    if (playerId && players.length > 0) {
+      const player = players.find(p => p.id === Number(playerId));
+      if (player) {
+        setSelectedPlayer(player);
+        setModalOpen(true);
+      }
+    }
+  }, [searchParams, players]);
+
+  const handleModalChange = useCallback((open: boolean) => {
+    setModalOpen(open);
+    if (!open) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [setSearchParams]);
+
   const handleRefresh = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['nba-players'] });
     queryClient.invalidateQueries({ queryKey: ['nba-stats'] });
@@ -65,8 +89,18 @@ const Index = () => {
     toast.info('Refreshing data from live API...');
   }, [queryClient]);
 
-  const isFetching = playersFetching || statsFetching || recordsFetching;
-  const isInitialLoad = players.length === 0 && playersFetching;
+  // Pull-to-refresh on mobile
+  const pullStartY = useRef(0);
+  const mainRef = useRef<HTMLElement>(null);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    pullStartY.current = e.touches[0].clientY;
+  }, []);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const pullDistance = e.changedTouches[0].clientY - pullStartY.current;
+    if (pullDistance > 100 && window.scrollY === 0 && !isFetching) {
+      handleRefresh();
+    }
+  }, [handleRefresh, isFetching]);
 
   const hasToasted = useRef(false);
   useEffect(() => {
@@ -117,6 +151,13 @@ const Index = () => {
       });
     }
 
+    // Pin favorites to the top when showing all players (not filtering by favorites)
+    if (gridFilter !== 'FAV_PLAYERS' && gridFilter !== 'FAV_TEAMS' && sortBy === 'default' && !searchQuery) {
+      const favs = result.filter(p => favPlayerIds.has(p.id));
+      const rest = result.filter(p => !favPlayerIds.has(p.id));
+      result = [...favs, ...rest];
+    }
+
     return result;
   }, [players, searchQuery, gridFilter, favPlayerIds, favTeamIds, sortBy, statsMap]);
 
@@ -131,6 +172,7 @@ const Index = () => {
     }
     setSelectedPlayer(player);
     setModalOpen(true);
+    setSearchParams({ player: String(player.id) }, { replace: true });
   };
 
   const isSelected = (id: number) => compareMode && (compareSlots[0]?.id === id || compareSlots[1]?.id === id);
@@ -141,8 +183,14 @@ const Index = () => {
     setCompareSlots([null, null]);
   };
 
+  // Data freshness badge
+  const lastRefreshed = getLastRefreshed();
+  const dataAge = lastRefreshed
+    ? `Updated ${lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    : null;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground">
         Skip to main content
       </a>
@@ -164,10 +212,10 @@ const Index = () => {
                     ? <span className="text-yellow-600 dark:text-yellow-400">· Sample Data</span>
                     : <span className="text-green-600 dark:text-green-400">· Live</span>
                   }
-                  {(() => { const t = getLastRefreshed(); return t ? <span>· Updated {t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> : null; })()}
+                  {dataAge && <span>· {dataAge}</span>}
                   {isFetching
                     ? <RefreshCw className="h-3 w-3 animate-spin text-primary" aria-label="Loading" />
-                    : <button onClick={handleRefresh} className="hover:text-foreground transition-colors" aria-label="Refresh data" title="Refresh data">
+                    : <button onClick={handleRefresh} className="hover:text-foreground transition-colors" aria-label="Refresh data" title="Pull down to refresh on mobile">
                         <RefreshCw className="h-3 w-3" />
                       </button>
                   }
@@ -246,31 +294,39 @@ const Index = () => {
         </div>
       </header>
 
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
+      <main id="main-content" ref={mainRef} className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
         <AnimatePresence mode="wait">
           {viewMode === 'grid' ? (
             <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               {isInitialLoad ? (
                 <PlayerCardSkeleton count={8} />
               ) : filteredPlayers.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" role="list" aria-label="Player cards">
-                  {filteredPlayers.map((player, i) => (
-                    <div key={player.id} role="listitem" className={`relative ${isSelected(player.id) ? 'ring-2 ring-primary rounded-2xl' : ''}`}>
-                      <PlayerCard player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} teamRecord={teamRecords[player.team.id]} />
-                      <button onClick={(e) => { e.stopPropagation(); toggleFavPlayer(player.id); }}
-                        className="absolute top-3 left-3 z-10 p-2 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        aria-label={`${favPlayerIds.has(player.id) ? 'Remove' : 'Add'} ${player.first_name} ${player.last_name} ${favPlayerIds.has(player.id) ? 'from' : 'to'} favorites`}
-                        aria-pressed={favPlayerIds.has(player.id)}>
-                        <Heart className={`h-4 w-4 transition-colors ${favPlayerIds.has(player.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} aria-hidden="true" />
-                      </button>
-                      {isSelected(player.id) && (
-                        <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold z-10">
-                          {compareSlots[0]?.id === player.id ? '1' : '2'}
-                        </div>
-                      )}
+                <>
+                  {favPlayerIds.size > 0 && gridFilter === 'ALL' && sortBy === 'default' && !searchQuery && (
+                    <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
+                      <Heart className="h-3 w-3 fill-red-500 text-red-500" aria-hidden="true" />
+                      <span>Your favorites are pinned to the top</span>
                     </div>
-                  ))}
-                </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" role="list" aria-label="Player cards">
+                    {filteredPlayers.map((player, i) => (
+                      <div key={player.id} role="listitem" className={`relative ${isSelected(player.id) ? 'ring-2 ring-primary rounded-2xl' : ''}`}>
+                        <PlayerCard player={player} stats={statsMap[player.id]} onClick={handlePlayerClick} index={i} teamRecord={teamRecords[player.team.id]} />
+                        <button onClick={(e) => { e.stopPropagation(); toggleFavPlayer(player.id); }}
+                          className="absolute top-3 left-3 z-10 p-2 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          aria-label={`${favPlayerIds.has(player.id) ? 'Remove' : 'Add'} ${player.first_name} ${player.last_name} ${favPlayerIds.has(player.id) ? 'from' : 'to'} favorites`}
+                          aria-pressed={favPlayerIds.has(player.id)}>
+                          <Heart className={`h-4 w-4 transition-colors ${favPlayerIds.has(player.id) ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} aria-hidden="true" />
+                        </button>
+                        {isSelected(player.id) && (
+                          <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold z-10">
+                            {compareSlots[0]?.id === player.id ? '1' : '2'}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-20" role="status">
                   <p className="text-muted-foreground text-lg">
@@ -328,7 +384,7 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      <PlayerDetailModal player={selectedPlayer} stats={selectedPlayer ? statsMap[selectedPlayer.id] : undefined} open={modalOpen} onOpenChange={setModalOpen} />
+      <PlayerDetailModal player={selectedPlayer} stats={selectedPlayer ? statsMap[selectedPlayer.id] : undefined} open={modalOpen} onOpenChange={handleModalChange} />
 
       {compareSlots[0] && compareSlots[1] && (
         <PlayerCompareModal players={[compareSlots[0], compareSlots[1]]} stats={[statsMap[compareSlots[0].id], statsMap[compareSlots[1].id]]} open={compareOpen} onOpenChange={setCompareOpen} />

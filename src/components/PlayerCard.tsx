@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion';
+import { Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
 import { PlayerAvatar } from './PlayerAvatar';
 import { safeMinutes } from '@/lib/utils';
@@ -21,6 +23,21 @@ const StatBlock = ({ label, value }: { label: string; value: string | number }) 
 );
 
 export function PlayerCard({ player, stats, onClick, index, teamRecord }: PlayerCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const name = `${player.first_name} ${player.last_name}`;
+    const team = player.team.abbreviation;
+    const statLine = stats
+      ? `${stats.pts.toFixed(1)} PPG / ${stats.reb.toFixed(1)} RPG / ${stats.ast.toFixed(1)} APG`
+      : 'No stats available';
+    const text = `${name} (${team}) — ${statLine}`;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <motion.div
@@ -28,7 +45,7 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
       tabIndex={0}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.03 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.5) }}
       whileHover={{ y: -6, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick(player)}
@@ -45,7 +62,7 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
         <div className="p-5">
           <div className="flex items-center gap-3 mb-4">
             <PlayerAvatar player={player} size="md" rounded="full" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {player.team.abbreviation}{player.jersey_number != null && player.jersey_number !== '' ? ` · #${player.jersey_number}` : ''}
                 {teamRecord && <span className="normal-case"> · {teamRecord.wins}W-{teamRecord.losses}L</span>}
@@ -55,6 +72,14 @@ export function PlayerCard({ player, stats, onClick, index, teamRecord }: Player
               </div>
               <div className="text-xs text-muted-foreground">{player.position}{player.height !== 'N/A' ? ` · ${player.height}` : ''}</div>
             </div>
+            <button
+              onClick={handleCopy}
+              className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground shrink-0"
+              aria-label={`Copy ${player.first_name} ${player.last_name} stats`}
+              title="Copy stats"
+            >
+              {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
           </div>
 
           {stats && (

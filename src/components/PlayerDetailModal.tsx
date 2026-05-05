@@ -1,4 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Copy, Check, Share2 } from 'lucide-react';
+import { useState } from 'react';
 import { NBAPlayer, PlayerStats } from '@/lib/types';
 import { PlayerAvatar } from './PlayerAvatar';
 import { safeMinutes } from '@/lib/utils';
@@ -102,8 +104,50 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
             {player.country && <InfoRow label="Country" value={player.country} />}
             {player.career_teams && player.career_teams.length > 0 && <InfoRow label="Career Teams" value={[...new Set(player.career_teams)].join(' → ')} />}
           </motion.div>
+
+          <ShareButtons player={player} stats={stats} />
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ShareButtons({ player, stats }: { player: NBAPlayer; stats?: PlayerStats }) {
+  const [copied, setCopied] = useState(false);
+
+  const statLine = stats
+    ? `${stats.pts.toFixed(1)} PPG / ${stats.reb.toFixed(1)} RPG / ${stats.ast.toFixed(1)} APG`
+    : 'No stats';
+  const text = `${player.first_name} ${player.last_name} (${player.team.abbreviation}) — ${statLine}`;
+  const shareUrl = `${window.location.origin}?player=${player.id}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`${text}\n${shareUrl}`).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({ title: `${player.first_name} ${player.last_name}`, text, url: shareUrl });
+    } else {
+      handleCopy();
+    }
+  };
+
+  return (
+    <div className="flex gap-2">
+      <button onClick={handleCopy}
+        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+        {copied ? 'Copied!' : 'Copy Stats'}
+      </button>
+      <button onClick={handleShare}
+        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border/60 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+        <Share2 className="h-4 w-4" />
+        Share
+      </button>
+    </div>
   );
 }
