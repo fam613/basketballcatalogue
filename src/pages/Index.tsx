@@ -13,7 +13,8 @@ import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from 'sonner';
-import { isUsingFallbackData, getLastRefreshed, getApiStatus, getFallbackDataAge } from '@/lib/nba-api';
+import { isUsingFallbackData, getLastRefreshed, getApiStatus } from '@/lib/nba-api';
+import { DATA_LAST_UPDATED } from '@/lib/nba-data';
 import { useQueryClient } from '@tanstack/react-query';
 
 type GridFilter = PositionFilter | 'FAV_PLAYERS' | 'FAV_TEAMS';
@@ -73,10 +74,9 @@ const Index = () => {
       hasToasted.current = true;
       const status = getApiStatus();
       if (isUsingFallbackData()) {
-        getFallbackDataAge().then(days => {
-          const ageMsg = days > 3 ? ` (fallback data is ${days} days old)` : '';
-          toast.error(`Live API failed — showing cached data${ageMsg}${status.lastError ? `\n${status.lastError}` : ''}`, { duration: 8000 });
-        });
+        const days = Math.floor((Date.now() - new Date(DATA_LAST_UPDATED).getTime()) / (1000 * 60 * 60 * 24));
+        const ageMsg = days > 3 ? ` (fallback data is ${days} days old)` : '';
+        toast.error(`Live API failed — showing cached data${ageMsg}${status.lastError ? `\n${status.lastError}` : ''}`, { duration: 8000 });
       } else if (status.errors > 0) {
         toast.warning(`Loaded live data with ${status.errors} API errors`, { duration: 5000 });
       }
@@ -304,7 +304,7 @@ const Index = () => {
                   {slot ? (
                     <>
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: slot.team.color }} aria-hidden="true">
-                        {slot.first_name[0]}{slot.last_name[0]}
+                        {slot.first_name?.[0] ?? '?'}{slot.last_name?.[0] ?? '?'}
                       </div>
                       <span className="text-sm font-semibold max-w-[60px] sm:max-w-[100px] truncate">{slot.last_name}</span>
                       <button onClick={() => setCompareSlots(i === 0 ? [null, compareSlots[1]] : [compareSlots[0], null])}

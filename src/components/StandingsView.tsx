@@ -15,7 +15,8 @@ function pct(w: number, l: number) {
 
 function gb(leader: NBATeam, team: NBATeam) {
   const diff = ((leader.wins - team.wins) + (team.losses - leader.losses)) / 2;
-  return diff === 0 ? '—' : diff.toFixed(1);
+  if (!Number.isFinite(diff) || diff === 0) return '—';
+  return diff.toFixed(1);
 }
 
 function ConferenceTable({ title, teams, favTeamIds, onToggleFavTeam }: { title: string; teams: NBATeam[]; favTeamIds?: Set<number>; onToggleFavTeam?: (id: number) => void }) {

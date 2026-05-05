@@ -16,7 +16,7 @@ export function usePlayersQuery() {
 
 export function usePlayerStatsQuery(playerIds: number[]) {
   return useQuery<Record<number, PlayerStats>>({
-    queryKey: ['nba-stats', playerIds.length],
+    queryKey: ['nba-stats', playerIds],
     queryFn: () => fetchSeasonAverages(playerIds),
     staleTime: THIRTY_MINUTES,
     enabled: playerIds.length > 0,

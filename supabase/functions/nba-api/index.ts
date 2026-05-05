@@ -1,11 +1,11 @@
-const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS = new Set([
   'https://basketballcatalogue.lovable.app',
   'http://localhost:8080',
   'http://localhost:5173',
-]
+])
 
 function getCorsHeaders(origin: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o)) ? origin : ALLOWED_ORIGINS[0]
+  const allowedOrigin = origin && ALLOWED_ORIGINS.has(origin) ? origin : '*'
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

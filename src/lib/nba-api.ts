@@ -14,11 +14,6 @@ export function getApiStatus() {
   return { lastError: _lastError, calls: _apiCallCount, errors: _apiErrorCount, usingFallback: _usingFallback, lastRefreshed: _lastRefreshed }
 }
 
-export async function getFallbackDataAge(): Promise<number> {
-  const { DATA_LAST_UPDATED } = await loadFallbackData()
-  const updated = new Date(DATA_LAST_UPDATED)
-  return Math.floor((Date.now() - updated.getTime()) / (1000 * 60 * 60 * 24))
-}
 
 interface ApiTeamResponse {
   id: number;
@@ -189,29 +184,6 @@ function isActiveNbaPlayer(p: ApiPlayerResponse): boolean {
   return true
 }
 
-function average(values: number[]) {
-  return values.length ? values.reduce((sum, v) => sum + v, 0) / values.length : 0
-}
-
-function mapAggregatedStats(playerId: number, statLines: ApiStatsResponse[]): PlayerStats {
-  const minutes = statLines
-    .map((line) => Number.parseFloat(String(line.min ?? '0')))
-    .filter((v) => Number.isFinite(v))
-  return {
-    player_id: playerId,
-    pts: average(statLines.map((l) => Number(l.pts ?? 0))),
-    reb: average(statLines.map((l) => Number(l.reb ?? 0))),
-    ast: average(statLines.map((l) => Number(l.ast ?? 0))),
-    min: minutes.length ? average(minutes).toFixed(1) : '0',
-    gp: statLines.length,
-    stl: average(statLines.map((l) => Number(l.stl ?? 0))),
-    blk: average(statLines.map((l) => Number(l.blk ?? 0))),
-    fg_pct: average(statLines.map((l) => Number(l.fg_pct ?? 0))),
-    fg3_pct: average(statLines.map((l) => Number(l.fg3_pct ?? 0))),
-    ft_pct: average(statLines.map((l) => Number(l.ft_pct ?? 0))),
-    turnover: average(statLines.map((l) => Number(l.turnover ?? 0))),
-  }
-}
 
 export async function fetchPlayers(): Promise<NBAPlayer[]> {
   try {

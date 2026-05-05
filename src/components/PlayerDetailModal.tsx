@@ -95,7 +95,7 @@ export function PlayerDetailModal({ player, stats, open, onOpenChange }: PlayerD
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="rounded-xl border border-border/60 p-4">
             <h4 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Player Info</h4>
-            <InfoRow label="Team Record" value={`${player.team.wins}W - ${player.team.losses}L`} />
+            <InfoRow label="Team Record" value={`${player.team.wins ?? 0}W - ${player.team.losses ?? 0}L`} />
             <InfoRow label="Games Played" value={stats ? String(stats.gp) : 'N/A'} />
             <InfoRow label="Draft" value={draftInfo} />
             {player.college && <InfoRow label="College" value={player.college} />}
