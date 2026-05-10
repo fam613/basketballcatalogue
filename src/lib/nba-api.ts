@@ -3,15 +3,18 @@ import { NBA_TEAMS } from './nba-data'
 
 const loadFallbackData = () => import('./nba-data')
 
-let _usingFallback = false
+type DataSource = 'loading' | 'live' | 'fallback'
+let _dataSource: DataSource = 'loading'
 let _lastRefreshed: Date | null = null
 let _lastError: string | null = null
 let _apiCallCount = 0
 let _apiErrorCount = 0
-export function isUsingFallbackData() { return _usingFallback }
+let _livePlayerCount = 0
+export function isUsingFallbackData() { return _dataSource === 'fallback' }
+export function getDataSource() { return _dataSource }
 export function getLastRefreshed() { return _lastRefreshed }
 export function getApiStatus() {
-  return { lastError: _lastError, calls: _apiCallCount, errors: _apiErrorCount, usingFallback: _usingFallback, lastRefreshed: _lastRefreshed }
+  return { dataSource: _dataSource, lastError: _lastError, calls: _apiCallCount, errors: _apiErrorCount, lastRefreshed: _lastRefreshed, livePlayerCount: _livePlayerCount }
 }
 
 
@@ -215,15 +218,16 @@ export async function fetchPlayers(): Promise<NBAPlayer[]> {
 
     if (deduped.length > 0) {
       _lastRefreshed = new Date()
-      _usingFallback = false
+      _dataSource = 'live'
+      _livePlayerCount = deduped.length
       return deduped
     }
 
-    _usingFallback = true
+    _dataSource = 'fallback'
     const { NBA_PLAYERS } = await loadFallbackData()
     return NBA_PLAYERS
   } catch {
-    _usingFallback = true
+    _dataSource = 'fallback'
     try {
       const { NBA_PLAYERS } = await loadFallbackData()
       return NBA_PLAYERS
@@ -241,20 +245,16 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
     const results: Record<number, PlayerStats> = {}
     let consecutiveChunkFailures = 0
 
-    // Use the premium season_averages endpoint — one call per player but returns
-    // clean pre-computed per-game averages (no manual aggregation needed)
     const chunkSize = 5
     for (let i = 0; i < playerIds.length; i += chunkSize) {
       if (consecutiveChunkFailures >= 3) break
 
       const chunk = playerIds.slice(i, i + chunkSize)
-      // Collect per-promise results, then aggregate after Promise.all (no shared mutable counter)
       const outcomes = await Promise.all(chunk.map(async (pid) => {
         try {
           const data = await callNbaApi('season_averages', { player_id: pid, season })
           if (data.data && data.data.length > 0) {
             const s = data.data[0]
-            // Convert MM:SS format to decimal minutes if needed
             const minStr = String(s.min ?? '0')
             const minDecimal = minStr.includes(':')
               ? (() => { const [m, sec] = minStr.split(':').map(Number); return (m + (sec || 0) / 60).toFixed(1) })()
@@ -284,7 +284,6 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
         }
       }))
 
-      // Aggregate after all promises settle — no race
       let chunkHadSuccess = false
       for (const outcome of outcomes) {
         if (outcome.ok && outcome.stats) {
@@ -297,7 +296,6 @@ export async function fetchSeasonAverages(playerIds: number[]): Promise<Record<n
       if (i + chunkSize < playerIds.length) await delay(150)
     }
 
-    // Only load fallback for players missing stats
     const missingIds = playerIds.filter(id => !results[id])
     if (missingIds.length > 0) {
       const { PLAYER_STATS } = await loadFallbackData()
