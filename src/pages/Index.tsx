@@ -13,7 +13,7 @@ import { NBAPlayer, ViewMode, PositionFilter } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/hooks/use-theme';
 import { toast } from 'sonner';
-import { isUsingFallbackData, getLastRefreshed, getApiStatus } from '@/lib/nba-api';
+import { isUsingFallbackData, getLastRefreshed, getApiStatus, getDataSource } from '@/lib/nba-api';
 import { DATA_LAST_UPDATED } from '@/lib/nba-data';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
@@ -102,17 +102,28 @@ const Index = () => {
     }
   }, [handleRefresh, isFetching]);
 
+  // Honest data source badge
+  const dataSource = getDataSource();
+  const lastRefreshed = getLastRefreshed();
+  const fallbackDate = new Date(DATA_LAST_UPDATED);
+  const formatDate = (d: Date) => d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' at ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const fallbackDaysOld = Math.floor((Date.now() - fallbackDate.getTime()) / 86400000);
+
   const hasToasted = useRef(false);
   useEffect(() => {
     if (!playersFetching && players.length > 0 && !hasToasted.current) {
       hasToasted.current = true;
       const status = getApiStatus();
-      if (isUsingFallbackData()) {
-        const days = Math.floor((Date.now() - new Date(DATA_LAST_UPDATED).getTime()) / (1000 * 60 * 60 * 24));
-        const ageMsg = days > 3 ? ` (fallback data is ${days} days old)` : '';
-        toast.error(`Live API failed — showing cached data${ageMsg}${status.lastError ? `\n${status.lastError}` : ''}`, { duration: 8000 });
-      } else if (status.errors > 0) {
-        toast.warning(`Loaded live data with ${status.errors} API errors`, { duration: 5000 });
+      if (status.dataSource === 'fallback') {
+        const daysOld = Math.floor((Date.now() - fallbackDate.getTime()) / 86400000);
+        toast.error(
+          `Could not reach live API${status.lastError ? ` (${status.lastError})` : ''}.\nShowing offline data from ${formatDate(fallbackDate)}${daysOld > 1 ? ` — ${daysOld} days old` : ''}.`,
+          { duration: 10000 }
+        );
+      } else if (status.dataSource === 'live' && status.errors > 0) {
+        toast.warning(`Loaded ${status.livePlayerCount} players with ${status.errors} API errors`, { duration: 5000 });
+      } else if (status.dataSource === 'live' && players.length < 100) {
+        toast.warning(`Only ${players.length} players loaded — data may be incomplete`, { duration: 5000 });
       }
     }
   }, [playersFetching, players.length]);
@@ -183,12 +194,6 @@ const Index = () => {
     setCompareSlots([null, null]);
   };
 
-  // Data freshness badge
-  const lastRefreshed = getLastRefreshed();
-  const dataAge = lastRefreshed
-    ? `Updated ${lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-    : null;
-
   return (
     <div className="min-h-screen bg-background" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground">
@@ -206,16 +211,23 @@ const Index = () => {
                 <h1 className="text-xl font-bold tracking-tight" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   NBA Cards
                 </h1>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  {players.length} Players
-                  {isUsingFallbackData()
-                    ? <span className="text-yellow-600 dark:text-yellow-400">· Sample Data</span>
-                    : <span className="text-green-600 dark:text-green-400">· Live</span>
-                  }
-                  {dataAge && <span>· {dataAge}</span>}
+                <p className="text-xs flex items-center gap-1.5">
+                  <span className="text-muted-foreground">{players.length} Players</span>
+                  {dataSource === 'loading' && (
+                    <span className="text-blue-500">· Connecting to API...</span>
+                  )}
+                  {dataSource === 'live' && lastRefreshed && (
+                    <span className="text-green-600 dark:text-green-400">· Live — {formatDate(lastRefreshed)}</span>
+                  )}
+                  {dataSource === 'fallback' && (
+                    <span className={`font-semibold ${fallbackDaysOld > 3 ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                      · OFFLINE — Data from {formatDate(fallbackDate)}
+                      {fallbackDaysOld > 0 && ` (${fallbackDaysOld}d old)`}
+                    </span>
+                  )}
                   {isFetching
                     ? <RefreshCw className="h-3 w-3 animate-spin text-primary" aria-label="Loading" />
-                    : <button onClick={handleRefresh} className="hover:text-foreground transition-colors" aria-label="Refresh data" title="Pull down to refresh on mobile">
+                    : <button onClick={handleRefresh} className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Refresh data" title="Pull down to refresh on mobile">
                         <RefreshCw className="h-3 w-3" />
                       </button>
                   }
