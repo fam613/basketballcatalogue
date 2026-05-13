@@ -203,6 +203,7 @@ export async function fetchPlayoffGames(): Promise<PlayoffSeries[]> {
       }
     }
     for (const series of Object.values(seriesMap)) {
+      series.games.sort((a, b) => a.date.localeCompare(b.date))
       if (series.team1Wins >= 4) { series.status = 'completed'; series.winnerId = series.team1Id }
       else if (series.team2Wins >= 4) { series.status = 'completed'; series.winnerId = series.team2Id }
     }
