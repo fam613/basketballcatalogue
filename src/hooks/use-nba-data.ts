@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchPlayers, fetchSeasonAverages, fetchTeamRecords } from '@/lib/nba-api'
-import { NBAPlayer, PlayerStats } from '@/lib/types'
+import { fetchPlayers, fetchSeasonAverages, fetchTeamRecords, fetchPlayoffGames } from '@/lib/nba-api'
+import { NBAPlayer, PlayerStats, PlayoffSeries } from '@/lib/types'
 
 const THIRTY_MINUTES = 30 * 60 * 1000
+const FIVE_MINUTES = 5 * 60 * 1000
 const JITTER = () => Math.random() * 5 * 60 * 1000
 
 export function usePlayersQuery() {
@@ -29,5 +30,14 @@ export function useTeamRecordsQuery() {
     queryFn: fetchTeamRecords,
     staleTime: THIRTY_MINUTES,
     refetchInterval: THIRTY_MINUTES + JITTER(),
+  })
+}
+
+export function usePlayoffGamesQuery() {
+  return useQuery<PlayoffSeries[]>({
+    queryKey: ['nba-playoff-games'],
+    queryFn: fetchPlayoffGames,
+    staleTime: FIVE_MINUTES,
+    refetchInterval: FIVE_MINUTES + JITTER(),
   })
 }
