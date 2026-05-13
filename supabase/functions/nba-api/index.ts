@@ -1,4 +1,5 @@
 const ALLOWED_ORIGINS = new Set([
+  'https://rfbasketball.netlify.app',
   'https://basketballcatalogue.lovable.app',
   'https://d55ffaf8-32e9-43c1-9a62-b2430739dad4.lovable.app',
   'https://fam613.github.io',
