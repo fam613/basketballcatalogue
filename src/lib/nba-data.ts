@@ -1,6 +1,6 @@
 import { NBAPlayer, NBATeam, PlayerStats } from './types'
 
-export const DATA_LAST_UPDATED = '2026-06-28T11:22:10.985Z'
+export const DATA_LAST_UPDATED = '2026-06-29T13:22:06.455Z'
 
 export const NBA_TEAMS: NBATeam[] = [
   { id: 1, abbreviation: "ATL", city: "Atlanta", conference: "East", division: "Southeast", full_name: "Atlanta Hawks", name: "Hawks", wins: 46, losses: 36, color: "#E03A3E", secondaryColor: "#C1D32F" },
