@@ -1,6 +1,6 @@
 import { NBAPlayer, NBATeam, PlayerStats } from './types'
 
-export const DATA_LAST_UPDATED = '2026-06-29T13:22:06.455Z'
+export const DATA_LAST_UPDATED = '2026-06-30T11:59:06.412Z'
 
 export const NBA_TEAMS: NBATeam[] = [
   { id: 1, abbreviation: "ATL", city: "Atlanta", conference: "East", division: "Southeast", full_name: "Atlanta Hawks", name: "Hawks", wins: 46, losses: 36, color: "#E03A3E", secondaryColor: "#C1D32F" },
@@ -622,7 +622,6 @@ export const PLAYER_STATS: Record<number, PlayerStats> = {
   219: { player_id: 219, pts: 8.4, reb: 4.8, ast: 2.5, min: "21.6", gp: 47, stl: 0.6, blk: 1.1, fg_pct: 0.429, fg3_pct: 0.366, ft_pct: 0.857, turnover: 1.0 },
   221: { player_id: 221, pts: 10.0, reb: 3.5, ast: 2.6, min: "22.4", gp: 69, stl: 0.9, blk: 0.5, fg_pct: 0.451, fg3_pct: 0.308, ft_pct: 0.775, turnover: 1.0 },
   226: { player_id: 226, pts: 1.8, reb: 0.8, ast: 1.5, min: "6.7", gp: 23, stl: 0.4, blk: 0.1, fg_pct: 0.593, fg3_pct: 0.438, ft_pct: 1.000, turnover: 0.6 },
-  227: { player_id: 227, pts: 21.5, reb: 5.6, ast: 3.7, min: "33.8", gp: 77, stl: 0.8, blk: 0.7, fg_pct: 0.477, fg3_pct: 0.382, ft_pct: 0.820, turnover: 2.4 },
   229: { player_id: 229, pts: 2.6, reb: 2.6, ast: 0.4, min: "10.2", gp: 51, stl: 0.4, blk: 0.6, fg_pct: 0.422, fg3_pct: 0.184, ft_pct: 0.603, turnover: 0.4 },
   231: { player_id: 231, pts: 19.4, reb: 5.7, ast: 2.0, min: "30.3", gp: 48, stl: 1.1, blk: 1.4, fg_pct: 0.476, fg3_pct: 0.357, ft_pct: 0.803, turnover: 2.2 },
   237: { player_id: 237, pts: 20.9, reb: 6.1, ast: 7.2, min: "33.2", gp: 60, stl: 1.2, blk: 0.6, fg_pct: 0.515, fg3_pct: 0.317, ft_pct: 0.737, turnover: 3.0 },
